@@ -20,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Link } from "wouter"; // Added import
 
 export default function AdminPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -170,7 +171,15 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-2xl mx-auto space-y-6">
-        <h1 className="text-2xl font-bold mb-6">Amministrazione</h1>
+        <div className="flex items-center justify-between"> {/* Added div for better layout */}
+          <h1 className="text-2xl font-bold">Amministrazione</h1>
+          <Link href="/admin/database">
+            <Button variant="outline">
+              <Database className="h-4 w-4 mr-2" />
+              Configura Database
+            </Button>
+          </Link>
+        </div>
 
         {/* Statistiche */}
         <div className="grid grid-cols-3 gap-4">
@@ -206,14 +215,14 @@ export default function AdminPage() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-semibold">Gestione Archivio</h2>
             <div className="flex gap-2">
-              <Button 
+              <Button
                 variant="outline"
                 onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/admin/stats'] })}
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Aggiorna
               </Button>
-              <Button 
+              <Button
                 variant="destructive"
                 onClick={handleClearArchive}
                 disabled={isClearing}
@@ -236,7 +245,7 @@ export default function AdminPage() {
                 onChange={handleFileChange}
                 className="flex-1"
               />
-              <Button 
+              <Button
                 onClick={handleUpload}
                 disabled={!file || isUploading}
               >
@@ -250,8 +259,8 @@ export default function AdminPage() {
             </div>
 
             {errorLogId && (
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={handleDownloadErrors}
                 className="w-full"
               >
