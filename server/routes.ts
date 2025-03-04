@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer } from "http";
 import { storage } from "./storage";
 import { printer } from "./printer";
-import { insertProductSchema, insertSaleSchema } from "@shared/schema";
+import { insertProductSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express) {
@@ -31,12 +31,12 @@ export async function registerRoutes(app: Express) {
 
   app.post("/api/sales", async (req, res) => {
     const saleSchema = z.object({
-      total: z.number(),
+      total: z.string(),
       paymentMethod: z.string(),
       items: z.array(z.object({
         productId: z.number(),
         quantity: z.number(),
-        price: z.number()
+        price: z.string()
       }))
     });
 
@@ -53,7 +53,8 @@ export async function registerRoutes(app: Express) {
         receiptNumber: generateReceiptNumber()
       });
 
-      await Promise.all(result.data.items.map(item =>
+      // Creare gli elementi della vendita
+      const saleItems = await Promise.all(result.data.items.map(item =>
         storage.createSaleItem({
           saleId: sale.id,
           productId: item.productId,
@@ -62,12 +63,13 @@ export async function registerRoutes(app: Express) {
         })
       ));
 
-      // Print receipt
-      await printer.printReceipt(sale, result.data.items);
+      // Stampa ricevuta
+      await printer.printReceipt(sale, saleItems);
 
       res.json(sale);
     } catch (error) {
-      res.status(500).json({ error: "Failed to complete sale" });
+      console.error('Errore durante la creazione della vendita:', error);
+      res.status(500).json({ error: "Impossibile completare la vendita" });
     }
   });
 

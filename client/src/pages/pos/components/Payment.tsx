@@ -28,12 +28,12 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          total,
+          total: total.toFixed(2),
           paymentMethod: 'contanti',
           items: cart.map(item => ({
             productId: item.product.id,
             quantity: item.quantity,
-            price: item.product.price
+            price: parseFloat(item.product.price.toString()).toFixed(2)
           }))
         })
       });

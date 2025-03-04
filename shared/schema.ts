@@ -7,7 +7,7 @@ export const products = pgTable("products", {
   code: varchar("code", { length: 50 }).notNull().unique(),
   name: varchar("name", { length: 100 }).notNull(),
   description: text("description"),
-  price: numeric("price").notNull(),
+  price: numeric("price", { precision: 10, scale: 2 }).notNull(),
   category: varchar("category", { length: 50 }),
   inStock: integer("in_stock").default(0)
 });
@@ -15,7 +15,7 @@ export const products = pgTable("products", {
 export const sales = pgTable("sales", {
   id: serial("id").primaryKey(),
   timestamp: timestamp("timestamp").defaultNow().notNull(),
-  total: numeric("total").notNull(),
+  total: numeric("total", { precision: 10, scale: 2 }).notNull(),
   paymentMethod: varchar("payment_method", { length: 20 }).notNull(),
   receiptNumber: varchar("receipt_number", { length: 50 }).notNull()
 });
@@ -25,8 +25,8 @@ export const saleItems = pgTable("sale_items", {
   saleId: integer("sale_id").notNull(),
   productId: integer("product_id").notNull(),
   quantity: integer("quantity").notNull(),
-  price: numeric("price").notNull(),
-  discount: numeric("discount").default("0")
+  price: numeric("price", { precision: 10, scale: 2 }).notNull(),
+  discount: numeric("discount", { precision: 5, scale: 2 }).default("0")
 });
 
 export const insertProductSchema = createInsertSchema(products).omit({ id: true });
