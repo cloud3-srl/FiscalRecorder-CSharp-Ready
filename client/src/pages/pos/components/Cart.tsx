@@ -29,7 +29,14 @@ export default function Cart({ items, setItems }: CartProps) {
 
   return (
     <div className="space-y-4">
-      <div className="text-lg font-semibold mb-4">Carrello</div>
+      {/* Blocco totale sempre visibile in alto */}
+      <div className="bg-green-100 p-4 rounded-lg sticky top-0">
+        <div className="text-xl font-bold text-right text-green-800">
+          Totale: €{total.toFixed(2)}
+        </div>
+      </div>
+
+      <div className="text-lg font-semibold">Carrello</div>
 
       <div className="space-y-2 max-h-[calc(100vh-400px)] overflow-y-auto">
         {items.map(({ product, quantity }) => (
@@ -73,12 +80,6 @@ export default function Cart({ items, setItems }: CartProps) {
             </div>
           </div>
         ))}
-      </div>
-
-      <div className="bg-green-100 p-4 rounded-lg">
-        <div className="text-xl font-bold text-right text-green-800">
-          Totale: €{total.toFixed(2)}
-        </div>
       </div>
     </div>
   );
