@@ -138,6 +138,39 @@ export async function registerRoutes(app: Express) {
     res.json(product);
   });
 
+  app.patch("/api/products/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      res.status(400).json({ error: "Invalid ID" });
+      return;
+    }
+
+    const result = insertProductSchema.partial().safeParse(req.body);
+    if (!result.success) {
+      res.status(400).json({ error: result.error });
+      return;
+    }
+
+    try {
+      const updatedProduct = await db
+        .update(products)
+        .set(result.data)
+        .where(eq(products.id, id))
+        .returning()
+        .then(res => res[0]);
+
+      if (!updatedProduct) {
+        res.status(404).json({ error: "Prodotto non trovato" });
+        return;
+      }
+
+      res.json(updatedProduct);
+    } catch (error) {
+      console.error('Errore durante l\'aggiornamento del prodotto:', error);
+      res.status(500).json({ error: "Impossibile aggiornare il prodotto" });
+    }
+  });
+
   // Nuova route per l'importazione CSV
   app.post("/api/admin/import-products", upload.single('file'), async (req, res) => {
     if (!req.file) {
