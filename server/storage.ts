@@ -1,5 +1,5 @@
-import { products, sales, saleItems } from "@shared/schema";
-import type { Product, Sale, SaleItem, InsertProduct, InsertSale, InsertSaleItem } from "@shared/schema";
+import { products, sales, saleItems, quickButtons } from "@shared/schema";
+import type { Product, Sale, SaleItem, QuickButton, InsertProduct, InsertSale, InsertSaleItem, InsertQuickButton } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { db } from "./db";
 
@@ -11,6 +11,10 @@ export interface IStorage {
   getSale(id: number): Promise<Sale | undefined>;
   createSale(sale: InsertSale): Promise<Sale>;
   createSaleItem(item: InsertSaleItem): Promise<SaleItem>;
+  getQuickButtons(): Promise<QuickButton[]>;
+  createQuickButton(button: InsertQuickButton): Promise<QuickButton>;
+  deleteQuickButton(id: number): Promise<void>;
+  updateQuickButton(id: number, button: Partial<InsertQuickButton>): Promise<QuickButton>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -45,6 +49,31 @@ export class DatabaseStorage implements IStorage {
   async createSaleItem(item: InsertSaleItem): Promise<SaleItem> {
     const [created] = await db.insert(saleItems).values(item).returning();
     return created;
+  }
+
+  async getQuickButtons(): Promise<QuickButton[]> {
+    return await db.select().from(quickButtons).where(eq(quickButtons.active, true));
+  }
+
+  async createQuickButton(button: InsertQuickButton): Promise<QuickButton> {
+    const [created] = await db.insert(quickButtons).values(button).returning();
+    return created;
+  }
+
+  async deleteQuickButton(id: number): Promise<void> {
+    await db
+      .update(quickButtons)
+      .set({ active: false })
+      .where(eq(quickButtons.id, id));
+  }
+
+  async updateQuickButton(id: number, button: Partial<InsertQuickButton>): Promise<QuickButton> {
+    const [updated] = await db
+      .update(quickButtons)
+      .set(button)
+      .where(eq(quickButtons.id, id))
+      .returning();
+    return updated;
   }
 }
 

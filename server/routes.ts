@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer } from "http";
 import { storage } from "./storage";
 import { printer } from "./printer";
-import { insertProductSchema } from "@shared/schema";
+import { insertProductSchema, insertQuickButtonSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express) {
@@ -21,6 +21,51 @@ export async function registerRoutes(app: Express) {
 
     const product = await storage.createProduct(result.data);
     res.json(product);
+  });
+
+  // Quick Buttons routes
+  app.get("/api/quick-buttons", async (_req, res) => {
+    const buttons = await storage.getQuickButtons();
+    res.json(buttons);
+  });
+
+  app.post("/api/quick-buttons", async (req, res) => {
+    const result = insertQuickButtonSchema.safeParse(req.body);
+    if (!result.success) {
+      res.status(400).json({ error: result.error });
+      return;
+    }
+
+    const button = await storage.createQuickButton(result.data);
+    res.json(button);
+  });
+
+  app.delete("/api/quick-buttons/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      res.status(400).json({ error: "Invalid ID" });
+      return;
+    }
+
+    await storage.deleteQuickButton(id);
+    res.status(204).end();
+  });
+
+  app.patch("/api/quick-buttons/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      res.status(400).json({ error: "Invalid ID" });
+      return;
+    }
+
+    const result = insertQuickButtonSchema.partial().safeParse(req.body);
+    if (!result.success) {
+      res.status(400).json({ error: result.error });
+      return;
+    }
+
+    const button = await storage.updateQuickButton(id, result.data);
+    res.json(button);
   });
 
   // Sales routes
