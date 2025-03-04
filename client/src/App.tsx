@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import POS from "@/pages/pos";
 import AdminPage from "@/pages/admin";
 import DatabaseConfigPage from "@/pages/admin/database";
+import ReportPage from "@/pages/report";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -13,6 +14,7 @@ function Router() {
       <Route path="/" component={POS} />
       <Route path="/admin" component={AdminPage} />
       <Route path="/admin/database" component={DatabaseConfigPage} />
+      <Route path="/report" component={ReportPage} />
       <Route component={NotFound} />
     </Switch>
   );
