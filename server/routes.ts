@@ -168,7 +168,11 @@ export async function registerRoutes(app: Express) {
       const parser = parse(fileContent, {
         columns: true,
         skip_empty_lines: true,
-        trim: true
+        trim: true,
+        delimiter: ';',
+        quote: '"',
+        relax_quotes: true,
+        relax_column_count: true
       });
 
       // Leggi tutti i record
