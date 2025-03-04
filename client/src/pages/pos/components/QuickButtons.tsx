@@ -3,13 +3,17 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Product, QuickButton } from "@shared/schema";
 import { queryClient } from "@/lib/queryClient";
-import { Plus, Star, X } from "lucide-react";
+import { Plus, Star, X, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 
 interface QuickButtonsProps {
   onProductSelect: (product: Product) => void;
+}
+
+interface QuickButtonWithProduct extends QuickButton {
+  product: Product;
 }
 
 export default function QuickButtons({ onProductSelect }: QuickButtonsProps) {
@@ -24,9 +28,7 @@ export default function QuickButtons({ onProductSelect }: QuickButtonsProps) {
     queryKey: ['/api/products'],
   });
 
-  const { data: quickButtons, isLoading: isLoadingButtons } = useQuery<
-    (QuickButton & { product: Product })[]
-  >({
+  const { data: quickButtons, isLoading: isLoadingButtons } = useQuery<QuickButtonWithProduct[]>({
     queryKey: ['/api/quick-buttons'],
   });
 
@@ -35,7 +37,7 @@ export default function QuickButtons({ onProductSelect }: QuickButtonsProps) {
     product.code.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const { mutate: addQuickButton } = useMutation({
+  const { mutate: addQuickButton, isPending: isAddingButton } = useMutation({
     mutationFn: async (data: { productId: number, position: number }) => {
       const response = await fetch('/api/quick-buttons', {
         method: 'POST',
@@ -56,6 +58,13 @@ export default function QuickButtons({ onProductSelect }: QuickButtonsProps) {
         description: "Il prodotto è stato aggiunto ai preferiti"
       });
       setIsDialogOpen(false);
+    },
+    onError: () => {
+      toast({
+        title: "Errore",
+        description: "Impossibile aggiungere il tasto rapido",
+        variant: "destructive"
+      });
     }
   });
 
@@ -75,6 +84,13 @@ export default function QuickButtons({ onProductSelect }: QuickButtonsProps) {
         title: "Tasto rapido rimosso",
         description: "Il prodotto è stato rimosso dai preferiti"
       });
+    },
+    onError: () => {
+      toast({
+        title: "Errore",
+        description: "Impossibile rimuovere il tasto rapido",
+        variant: "destructive"
+      });
     }
   });
 
@@ -85,7 +101,7 @@ export default function QuickButtons({ onProductSelect }: QuickButtonsProps) {
         title: "Modalità modifica",
         description: "Ora puoi modificare questo tasto rapido"
       });
-    }, 4000); // 4 secondi
+    }, 4000);
 
     setLongPressTimer(timer);
   };
@@ -100,6 +116,14 @@ export default function QuickButtons({ onProductSelect }: QuickButtonsProps) {
 
   // Crea una griglia 4x4 di posizioni
   const gridPositions = Array.from({ length: 16 }, (_, i) => i + 1);
+
+  if (isLoadingButtons) {
+    return (
+      <div className="flex items-center justify-center h-48">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -123,7 +147,7 @@ export default function QuickButtons({ onProductSelect }: QuickButtonsProps) {
                   if (button) {
                     removeQuickButton(button.id);
                   }
-                } else if (button) {
+                } else if (button?.product) {
                   // Normale click con prodotto
                   onProductSelect(button.product);
                 } else {
@@ -133,7 +157,7 @@ export default function QuickButtons({ onProductSelect }: QuickButtonsProps) {
                 }
               }}
             >
-              {button ? (
+              {button?.product ? (
                 <>
                   {longPressPosition === position && (
                     <button
@@ -191,6 +215,7 @@ export default function QuickButtons({ onProductSelect }: QuickButtonsProps) {
                       });
                     }
                   }}
+                  disabled={isAddingButton}
                 >
                   <div className="text-sm font-medium truncate w-full">
                     {product.name}
