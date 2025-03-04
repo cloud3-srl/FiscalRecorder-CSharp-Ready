@@ -29,7 +29,7 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           total,
-          paymentMethod: 'cash',
+          paymentMethod: 'contanti',
           items: cart.map(item => ({
             productId: item.product.id,
             quantity: item.quantity,
@@ -39,7 +39,7 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to complete sale');
+        throw new Error('Impossibile completare la vendita');
       }
 
       return response.json();
@@ -47,16 +47,16 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/sales'] });
       toast({
-        title: "Sale completed",
-        description: "Receipt is being printed"
+        title: "Vendita completata",
+        description: "Stampa dello scontrino in corso"
       });
       onComplete();
       setCashReceived(0);
     },
     onError: () => {
       toast({
-        title: "Error",
-        description: "Failed to complete sale",
+        title: "Errore",
+        description: "Impossibile completare la vendita",
         variant: "destructive"
       });
     }
@@ -64,21 +64,21 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
 
   return (
     <div className="space-y-4">
-      <div className="text-lg font-semibold">Payment</div>
-      
+      <div className="text-lg font-semibold">Pagamento</div>
+
       <div className="space-y-2">
         <div className="flex justify-between">
-          <span>Total:</span>
+          <span>Totale:</span>
           <span className="font-bold">€{total.toFixed(2)}</span>
         </div>
-        
+
         <div className="flex justify-between">
-          <span>Cash received:</span>
+          <span>Contanti ricevuti:</span>
           <span>€{cashReceived.toFixed(2)}</span>
         </div>
-        
+
         <div className="flex justify-between">
-          <span>Change:</span>
+          <span>Resto:</span>
           <span className="font-bold text-green-600">
             €{Math.max(0, change).toFixed(2)}
           </span>
@@ -105,7 +105,7 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
         disabled={cart.length === 0 || cashReceived < total || isPending}
         onClick={() => completeSale()}
       >
-        Complete Sale
+        Completa Vendita
       </Button>
     </div>
   );

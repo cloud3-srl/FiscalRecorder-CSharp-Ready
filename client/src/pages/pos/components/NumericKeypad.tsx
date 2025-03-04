@@ -31,8 +31,9 @@ export default function NumericKeypad({ value, onChange }: NumericKeypadProps) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="text-right text-2xl"
+        placeholder="Quantità"
       />
-      
+
       <div className="grid grid-cols-3 gap-2">
         {buttons.map((button) => (
           <Button
@@ -40,6 +41,7 @@ export default function NumericKeypad({ value, onChange }: NumericKeypadProps) {
             variant={button === 'C' ? "destructive" : "default"}
             onClick={() => handleClick(button)}
             className="h-12 text-xl"
+            title={button === 'C' ? 'Cancella' : button}
           >
             {button}
           </Button>

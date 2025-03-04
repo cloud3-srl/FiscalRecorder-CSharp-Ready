@@ -11,7 +11,7 @@ interface ProductGridProps {
 
 export default function ProductGrid({ onProductSelect }: ProductGridProps) {
   const [search, setSearch] = useState("");
-  
+
   const { data: products, isLoading } = useQuery<Product[]>({
     queryKey: ['/api/products'],
   });
@@ -22,7 +22,7 @@ export default function ProductGrid({ onProductSelect }: ProductGridProps) {
   );
 
   if (isLoading) {
-    return <div>Loading products...</div>;
+    return <div>Caricamento prodotti...</div>;
   }
 
   return (
@@ -30,7 +30,7 @@ export default function ProductGrid({ onProductSelect }: ProductGridProps) {
       <div className="flex gap-2">
         <Search className="w-5 h-5 text-muted-foreground" />
         <Input
-          placeholder="Search products..."
+          placeholder="Cerca prodotti..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="flex-1"
