@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import ProductGrid from "./components/ProductGrid";
+import QuickButtons from "./components/QuickButtons";
 import NumericKeypad from "./components/NumericKeypad";
 import Cart from "./components/Cart";
 import Payment from "./components/Payment";
@@ -13,7 +14,7 @@ export default function POS() {
   const addToCart = (product: Product) => {
     const quantity = parseFloat(selectedQuantity) || 1;
     const existingItem = cart.find(item => item.product.id === product.id);
-    
+
     if (existingItem) {
       setCart(cart.map(item => 
         item.product.id === product.id 
@@ -33,6 +34,10 @@ export default function POS() {
           {/* Left side - Products and Keypad */}
           <div className="col-span-8 space-y-4">
             <Card className="p-4">
+              <h2 className="text-lg font-semibold mb-4">Preferiti</h2>
+              <QuickButtons onProductSelect={addToCart} />
+            </Card>
+            <Card className="p-4">
               <ProductGrid onProductSelect={addToCart} />
             </Card>
             <Card className="p-4">
@@ -42,7 +47,7 @@ export default function POS() {
               />
             </Card>
           </div>
-          
+
           {/* Right side - Cart and Payment */}
           <div className="col-span-4 space-y-4">
             <Card className="p-4">

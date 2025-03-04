@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, numeric, varchar, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, numeric, varchar, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -29,13 +29,24 @@ export const saleItems = pgTable("sale_items", {
   discount: numeric("discount", { precision: 5, scale: 2 }).default("0")
 });
 
+export const quickButtons = pgTable("quick_buttons", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull(),
+  position: integer("position").notNull(),
+  label: varchar("label", { length: 50 }),
+  active: boolean("active").default(true)
+});
+
 export const insertProductSchema = createInsertSchema(products).omit({ id: true });
 export const insertSaleSchema = createInsertSchema(sales).omit({ id: true, timestamp: true });
 export const insertSaleItemSchema = createInsertSchema(saleItems).omit({ id: true });
+export const insertQuickButtonSchema = createInsertSchema(quickButtons).omit({ id: true });
 
 export type Product = typeof products.$inferSelect;
 export type Sale = typeof sales.$inferSelect;
 export type SaleItem = typeof saleItems.$inferSelect;
+export type QuickButton = typeof quickButtons.$inferSelect;
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type InsertSale = z.infer<typeof insertSaleSchema>;
 export type InsertSaleItem = z.infer<typeof insertSaleItemSchema>;
+export type InsertQuickButton = z.infer<typeof insertQuickButtonSchema>;
