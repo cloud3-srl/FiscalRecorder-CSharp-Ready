@@ -3,19 +3,68 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Loader2, Download, Trash2, Database, RefreshCw } from "lucide-react";
+import { Upload, Loader2, Download, Trash2, Database, RefreshCw, Edit, Search } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function AdminPage() {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [errorLogId, setErrorLogId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [editingProduct, setEditingProduct] = useState<any>(null);
   const { toast } = useToast();
 
   // Query per ottenere le statistiche
   const { data: stats, isLoading: isLoadingStats } = useQuery({
     queryKey: ['/api/admin/stats'],
+  });
+
+  // Query per ottenere i prodotti
+  const { data: products, isLoading: isLoadingProducts } = useQuery({
+    queryKey: ['/api/products'],
+  });
+
+  // Mutation per aggiornare un prodotto
+  const { mutate: updateProduct, isPending: isUpdating } = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await fetch(`/api/products/${data.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      if (!response.ok) throw new Error('Impossibile aggiornare il prodotto');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      toast({
+        title: "Prodotto aggiornato",
+        description: "Le modifiche sono state salvate con successo"
+      });
+      setEditingProduct(null);
+    },
+    onError: () => {
+      toast({
+        title: "Errore",
+        description: "Impossibile aggiornare il prodotto",
+        variant: "destructive"
+      });
+    }
   });
 
   // Mutation per svuotare l'archivio
@@ -105,6 +154,18 @@ export default function AdminPage() {
       clearArchive();
     }
   };
+
+  const handleSaveProduct = () => {
+    if (editingProduct) {
+      updateProduct(editingProduct);
+    }
+  };
+
+  // Filtra i prodotti in base al termine di ricerca
+  const filteredProducts = products?.filter(product =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.code.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-background p-8">
@@ -218,6 +279,116 @@ export default function AdminPage() {
             </div>
           </div>
         </Card>
+
+        {/* Lista Articoli */}
+        <Card className="p-6">
+          <h2 className="text-lg font-semibold mb-4">Articoli</h2>
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Search className="w-5 h-5 text-muted-foreground" />
+              <Input
+                placeholder="Cerca articoli..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="flex-1"
+              />
+            </div>
+
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Codice</TableHead>
+                    <TableHead>Descrizione</TableHead>
+                    <TableHead>Prezzo</TableHead>
+                    <TableHead>Azioni</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoadingProducts ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-4">
+                        <Loader2 className="h-6 w-6 animate-spin mx-auto" />
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredProducts?.map((product) => (
+                    <TableRow key={product.id}>
+                      <TableCell>{product.code}</TableCell>
+                      <TableCell>{product.name}</TableCell>
+                      <TableCell>€{product.price.toString()}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setEditingProduct(product)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        </Card>
+
+        {/* Form di modifica */}
+        <Dialog open={!!editingProduct} onOpenChange={(open) => !open && setEditingProduct(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Modifica Articolo</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Codice</label>
+                  <Input
+                    value={editingProduct?.code || ''}
+                    onChange={(e) => setEditingProduct({...editingProduct, code: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Prezzo</label>
+                  <Input
+                    type="number"
+                    value={editingProduct?.price || ''}
+                    onChange={(e) => setEditingProduct({...editingProduct, price: e.target.value})}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Descrizione</label>
+                <Input
+                  value={editingProduct?.name || ''}
+                  onChange={(e) => setEditingProduct({...editingProduct, name: e.target.value})}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Unità di misura</label>
+                <Input
+                  value={editingProduct?.unitOfMeasure || ''}
+                  onChange={(e) => setEditingProduct({...editingProduct, unitOfMeasure: e.target.value})}
+                />
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setEditingProduct(null)}>
+                  Annulla
+                </Button>
+                <Button onClick={handleSaveProduct} disabled={isUpdating}>
+                  {isUpdating ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : null}
+                  Salva
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
