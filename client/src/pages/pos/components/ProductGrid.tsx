@@ -21,6 +21,9 @@ export default function ProductGrid({ onProductSelect }: ProductGridProps) {
     product.code.toLowerCase().includes(search.toLowerCase())
   );
 
+  // Prendi solo i primi 8 prodotti dalla lista filtrata
+  const displayedProducts = filteredProducts?.slice(0, 8);
+
   if (isLoading) {
     return <div>Caricamento prodotti...</div>;
   }
@@ -37,8 +40,8 @@ export default function ProductGrid({ onProductSelect }: ProductGridProps) {
         />
       </div>
 
-      <div className="grid grid-cols-4 gap-2">
-        {filteredProducts?.map(product => (
+      <div className="grid grid-rows-2 grid-cols-4 gap-2">
+        {displayedProducts?.map(product => (
           <Button
             key={product.id}
             variant="outline"
