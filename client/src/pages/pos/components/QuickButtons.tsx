@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Product, QuickButton } from "@shared/schema";
 import { queryClient } from "@/lib/queryClient";
-import { Plus, Star, X, Loader2 } from "lucide-react";
+import { Plus, Star, X, Pencil, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
@@ -21,8 +21,7 @@ export default function QuickButtons({ onProductSelect }: QuickButtonsProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [longPressPosition, setLongPressPosition] = useState<number | null>(null);
-  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   const { data: products } = useQuery<Product[]>({
     queryKey: ['/api/products'],
@@ -94,26 +93,6 @@ export default function QuickButtons({ onProductSelect }: QuickButtonsProps) {
     }
   });
 
-  const handleLongPressStart = (position: number) => {
-    const timer = setTimeout(() => {
-      setLongPressPosition(position);
-      toast({
-        title: "Modalità modifica",
-        description: "Ora puoi modificare questo tasto rapido"
-      });
-    }, 4000);
-
-    setLongPressTimer(timer);
-  };
-
-  const handleLongPressEnd = () => {
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      setLongPressTimer(null);
-    }
-    setLongPressPosition(null);
-  };
-
   // Crea una griglia 4x4 di posizioni
   const gridPositions = Array.from({ length: 16 }, (_, i) => i + 1);
 
@@ -127,6 +106,19 @@ export default function QuickButtons({ onProductSelect }: QuickButtonsProps) {
 
   return (
     <>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-lg font-semibold">Preferiti</h2>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setIsEditMode(!isEditMode)}
+          className={isEditMode ? "bg-muted" : ""}
+          title={isEditMode ? "Termina modifica" : "Modifica tasti rapidi"}
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
+      </div>
+
       <div className="grid grid-cols-4 gap-2">
         {gridPositions.map(position => {
           const button = quickButtons?.find(b => b.position === position);
@@ -136,30 +128,22 @@ export default function QuickButtons({ onProductSelect }: QuickButtonsProps) {
               key={position}
               variant="outline"
               className="h-24 relative"
-              onMouseDown={() => handleLongPressStart(position)}
-              onMouseUp={handleLongPressEnd}
-              onMouseLeave={handleLongPressEnd}
-              onTouchStart={() => handleLongPressStart(position)}
-              onTouchEnd={handleLongPressEnd}
               onClick={() => {
-                if (longPressPosition === position) {
-                  // In modalità modifica
+                if (isEditMode) {
                   if (button) {
                     removeQuickButton(button.id);
+                  } else {
+                    setSelectedPosition(position);
+                    setIsDialogOpen(true);
                   }
                 } else if (button?.product) {
-                  // Normale click con prodotto
                   onProductSelect(button.product);
-                } else {
-                  // Bottone vuoto
-                  setSelectedPosition(position);
-                  setIsDialogOpen(true);
                 }
               }}
             >
               {button?.product ? (
                 <>
-                  {longPressPosition === position && (
+                  {isEditMode && (
                     <button
                       className="absolute top-1 right-1 p-1 hover:bg-red-100 rounded"
                       onClick={(e) => {
