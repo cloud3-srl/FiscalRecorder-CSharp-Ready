@@ -104,56 +104,6 @@ export async function registerRoutes(app: Express) {
     res.json(button);
   });
 
-  // Sales routes
-  app.get("/api/sales", async (_req, res) => {
-    const sales = await storage.getAllSales();
-    res.json(sales);
-  });
-
-  app.post("/api/sales", async (req, res) => {
-    const saleSchema = z.object({
-      total: z.string(),
-      paymentMethod: z.string(),
-      items: z.array(z.object({
-        productId: z.number(),
-        quantity: z.number(),
-        price: z.string()
-      }))
-    });
-
-    const result = saleSchema.safeParse(req.body);
-    if (!result.success) {
-      res.status(400).json({ error: result.error });
-      return;
-    }
-
-    try {
-      const sale = await storage.createSale({
-        total: result.data.total,
-        paymentMethod: result.data.paymentMethod,
-        receiptNumber: generateReceiptNumber()
-      });
-
-      // Creare gli elementi della vendita
-      const saleItems = await Promise.all(result.data.items.map(item =>
-        storage.createSaleItem({
-          saleId: sale.id,
-          productId: item.productId,
-          quantity: item.quantity,
-          price: item.price
-        })
-      ));
-
-      // TODO: Implementare la stampa della ricevuta
-      // await printer.printReceipt(sale, saleItems);
-
-      res.json(sale);
-    } catch (error) {
-      console.error('Errore durante la creazione della vendita:', error);
-      res.status(500).json({ error: "Impossibile completare la vendita" });
-    }
-  });
-
   // Nuova route per l'importazione CSV
   app.post("/api/admin/import-products", upload.single('file'), async (req, res) => {
     if (!req.file) {
@@ -206,25 +156,107 @@ export async function registerRoutes(app: Express) {
           } catch (error) {
             errors.push({
               code: record.code,
-              error: `Errore durante l'inserimento: ${error.message}`
+              error: `Errore durante l'inserimento: ${error instanceof Error ? error.message : 'Errore sconosciuto'}`,
+              record: JSON.stringify(record)
             });
           }
         } else {
           errors.push({
             code: record.code,
-            error: `Validazione fallita: ${result.error.message}`
+            error: `Validazione fallita: ${result.error.message}`,
+            record: JSON.stringify(record)
           });
         }
+      }
+
+      // Se ci sono errori, genera un CSV di log
+      const errorLogId = errors.length > 0 ? Date.now().toString() : null;
+      if (errorLogId) {
+        const errorLog = `Codice,Errore,Dati Record\n${errors.map(e => 
+          `"${e.code}","${e.error}","${e.record}"`
+        ).join('\n')}`;
+
+        // Salva temporaneamente il log degli errori
+        app.locals.errorLogs = app.locals.errorLogs || {};
+        app.locals.errorLogs[errorLogId] = errorLog;
       }
 
       res.json({ 
         imported: importedProducts.length,
         total: records.length,
-        errors: errors.length > 0 ? errors : undefined
+        errors: errors.length > 0 ? errors : undefined,
+        errorLogId
       });
     } catch (error) {
       console.error('Errore durante l\'importazione:', error);
       res.status(500).json({ error: "Errore durante l'importazione del file" });
+    }
+  });
+
+  // Nuova route per scaricare il log degli errori
+  app.get("/api/admin/import-errors/:id", (req, res) => {
+    const errorLogId = req.params.id;
+    const errorLog = app.locals.errorLogs?.[errorLogId];
+
+    if (!errorLog) {
+      return res.status(404).json({ error: "Log degli errori non trovato" });
+    }
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename=errori_importazione_${errorLogId}.csv`);
+    res.send(errorLog);
+
+    // Rimuovi il log dopo il download
+    delete app.locals.errorLogs[errorLogId];
+  });
+
+  // Sales routes
+  app.get("/api/sales", async (_req, res) => {
+    const sales = await storage.getAllSales();
+    res.json(sales);
+  });
+
+  app.post("/api/sales", async (req, res) => {
+    const saleSchema = z.object({
+      total: z.string(),
+      paymentMethod: z.string(),
+      items: z.array(z.object({
+        productId: z.number(),
+        quantity: z.number(),
+        price: z.string()
+      }))
+    });
+
+    const result = saleSchema.safeParse(req.body);
+    if (!result.success) {
+      res.status(400).json({ error: result.error });
+      return;
+    }
+
+    try {
+      const sale = await storage.createSale({
+        total: result.data.total,
+        paymentMethod: result.data.paymentMethod,
+        receiptNumber: generateReceiptNumber()
+      });
+
+      // Creare gli elementi della vendita
+      const saleItems = await Promise.all(result.data.items.map(item =>
+        storage.createSaleItem({
+          saleId: sale.id,
+          productId: item.productId,
+          quantity: item.quantity,
+          price: item.price
+        })
+      ));
+
+      // TODO: Implementare la stampa della ricevuta
+      // await printer.printReceipt(sale, saleItems);
+
+      res.json(sale);
+    } catch (error) {
+      console.error('Errore durante la creazione della vendita:', error);
+      res.status(500).json({ error: "Impossibile completare la vendita" });
     }
   });
 

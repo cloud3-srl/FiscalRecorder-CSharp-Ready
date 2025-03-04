@@ -3,11 +3,12 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Loader2 } from "lucide-react";
+import { Upload, Loader2, Download } from "lucide-react";
 
 export default function AdminPage() {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [errorLogId, setErrorLogId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -36,12 +37,14 @@ export default function AdminPage() {
       const data = await response.json();
 
       if (data.errors && data.errors.length > 0) {
+        setErrorLogId(data.errorLogId);
         toast({
           title: "Importazione completata con errori",
           description: `Importati ${data.imported} prodotti su ${data.total}. ${data.errors.length} errori riscontrati.`,
           variant: "destructive"
         });
       } else {
+        setErrorLogId(null);
         toast({
           title: "Importazione completata",
           description: `Importati ${data.imported} prodotti con successo`
@@ -57,6 +60,12 @@ export default function AdminPage() {
       });
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleDownloadErrors = () => {
+    if (errorLogId) {
+      window.location.href = `/api/admin/import-errors/${errorLogId}`;
     }
   };
 
@@ -88,6 +97,17 @@ export default function AdminPage() {
                 Importa
               </Button>
             </div>
+
+            {errorLogId && (
+              <Button 
+                variant="outline" 
+                onClick={handleDownloadErrors}
+                className="w-full"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Scarica log errori
+              </Button>
+            )}
 
             <div className="text-sm text-muted-foreground">
               Il file CSV deve contenere le seguenti colonne:
