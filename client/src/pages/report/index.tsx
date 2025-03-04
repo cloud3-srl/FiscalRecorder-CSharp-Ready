@@ -7,7 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
-import { Printer, Loader2, RefreshCw } from "lucide-react";
+import { Printer, Loader2, RefreshCw, Upload } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -24,6 +24,7 @@ export default function ReportPage() {
   const { toast } = useToast();
   const [availablePrinters, setAvailablePrinters] = useState<string[]>([]);
   const [isLoadingPrinters, setIsLoadingPrinters] = useState(false);
+  const [previewLogo, setPreviewLogo] = useState<string | null>(null);
 
   // Query per ottenere la configurazione attuale
   const { data: config, isLoading } = useQuery({
@@ -43,7 +44,10 @@ export default function ReportPage() {
       marginRight: 0,
       headerText: "",
       footerText: "",
-      logoEnabled: false
+      logoEnabled: false,
+      logoImage: "",
+      logoWidth: 120,
+      logoHeight: 40
     }
   });
 
@@ -89,6 +93,19 @@ export default function ReportPage() {
       });
     } finally {
       setIsLoadingPrinters(false);
+    }
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64 = reader.result as string;
+        setPreviewLogo(base64);
+        form.setValue('logoImage', base64);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -276,6 +293,62 @@ export default function ReportPage() {
                   </FormItem>
                 )}
               />
+
+              {form.watch('logoEnabled') && (
+                <div className="space-y-4">
+                  <div className="border rounded p-4">
+                    <FormLabel className="block mb-2">Logo</FormLabel>
+                    <div className="flex items-center gap-4">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLogoUpload}
+                        className="flex-1"
+                      />
+                    </div>
+                    {previewLogo && (
+                      <div className="mt-4">
+                        <p className="text-sm text-muted-foreground mb-2">Anteprima:</p>
+                        <img
+                          src={previewLogo}
+                          alt="Logo preview"
+                          className="max-w-[120px] border rounded"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="logoWidth"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Larghezza logo (mm)</FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} max={120} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="logoHeight"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Altezza logo (mm)</FormLabel>
+                          <FormControl>
+                            <Input type="number" {...field} max={40} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+              )}
 
               <div className="flex justify-end">
                 <Button type="submit" disabled={isSaving}>
