@@ -4,6 +4,9 @@ import { storage } from "./storage";
 import { printer } from "./printer";
 import { insertProductSchema, insertQuickButtonSchema } from "@shared/schema";
 import { z } from "zod";
+import { eq } from 'drizzle-orm';
+import { db } from "./db";
+import { products, quickButtons } from "@shared/schema";
 
 export async function registerRoutes(app: Express) {
   // Products routes
@@ -25,8 +28,31 @@ export async function registerRoutes(app: Express) {
 
   // Quick Buttons routes
   app.get("/api/quick-buttons", async (_req, res) => {
-    const buttons = await storage.getQuickButtons();
-    res.json(buttons);
+    try {
+      const buttons = await db
+        .select({
+          id: quickButtons.id,
+          productId: quickButtons.productId,
+          position: quickButtons.position,
+          label: quickButtons.label,
+          active: quickButtons.active,
+          product: {
+            id: products.id,
+            code: products.code,
+            name: products.name,
+            price: products.price,
+            category: products.category
+          }
+        })
+        .from(quickButtons)
+        .leftJoin(products, eq(quickButtons.productId, products.id))
+        .where(eq(quickButtons.active, true));
+
+      res.json(buttons);
+    } catch (error) {
+      console.error('Errore nel recupero dei tasti rapidi:', error);
+      res.status(500).json({ error: "Impossibile recuperare i tasti rapidi" });
+    }
   });
 
   app.post("/api/quick-buttons", async (req, res) => {
