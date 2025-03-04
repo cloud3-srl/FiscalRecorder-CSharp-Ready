@@ -4,10 +4,19 @@ import { z } from "zod";
 
 export const products = pgTable("products", {
   id: serial("id").primaryKey(),
-  code: varchar("code", { length: 50 }).notNull().unique(),
-  name: varchar("name", { length: 100 }).notNull(),
+  code: varchar("code", { length: 50 }).notNull().unique(), 
+  name: varchar("name", { length: 255 }).notNull(), 
   description: text("description"),
-  price: numeric("price", { precision: 10, scale: 2 }).notNull(),
+  price: numeric("price", { precision: 10, scale: 2 }).notNull(), 
+  listCode: varchar("list_code", { length: 50 }), 
+  activationDate: timestamp("activation_date"), 
+  deactivationDate: timestamp("deactivation_date"), 
+  unitOfMeasure: varchar("unit_of_measure", { length: 20 }), 
+  controlFlag: varchar("control_flag", { length: 10 }), 
+  discount1: numeric("discount1", { precision: 5, scale: 2 }), 
+  discount2: numeric("discount2", { precision: 5, scale: 2 }), 
+  discount3: numeric("discount3", { precision: 5, scale: 2 }), 
+  discount4: numeric("discount4", { precision: 5, scale: 2 }), 
   category: varchar("category", { length: 50 }),
   inStock: integer("in_stock").default(0)
 });
