@@ -1,12 +1,22 @@
 import type { Express } from "express";
 import { createServer } from "http";
 import { storage } from "./storage";
-import { printer } from "./printer";
 import { insertProductSchema, insertQuickButtonSchema } from "@shared/schema";
 import { z } from "zod";
 import { eq } from 'drizzle-orm';
 import { db } from "./db";
 import { products, quickButtons } from "@shared/schema";
+import multer from "multer";
+import { parse } from "csv-parse";
+import { Readable } from "stream";
+
+// Configurazione multer per l'upload dei file
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limite
+  }
+});
 
 export async function registerRoutes(app: Express) {
   // Products routes
@@ -134,13 +144,60 @@ export async function registerRoutes(app: Express) {
         })
       ));
 
-      // Stampa ricevuta
-      await printer.printReceipt(sale, saleItems);
+      // TODO: Implementare la stampa della ricevuta
+      // await printer.printReceipt(sale, saleItems);
 
       res.json(sale);
     } catch (error) {
       console.error('Errore durante la creazione della vendita:', error);
       res.status(500).json({ error: "Impossibile completare la vendita" });
+    }
+  });
+
+  // Nuova route per l'importazione CSV
+  app.post("/api/admin/import-products", upload.single('file'), async (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ error: "Nessun file caricato" });
+    }
+
+    try {
+      const fileContent = req.file.buffer.toString();
+      const records: any[] = [];
+
+      // Parse CSV
+      const parser = parse(fileContent, {
+        columns: true,
+        skip_empty_lines: true
+      });
+
+      // Leggi tutti i record
+      for await (const record of parser) {
+        records.push({
+          code: record.code,
+          name: record.name,
+          price: record.price,
+          category: record.category || null,
+          description: record.description || null
+        });
+      }
+
+      // Valida e importa i prodotti
+      const importedProducts = [];
+      for (const record of records) {
+        const result = insertProductSchema.safeParse(record);
+        if (result.success) {
+          const product = await storage.createProduct(result.data);
+          importedProducts.push(product);
+        }
+      }
+
+      res.json({ 
+        imported: importedProducts.length,
+        total: records.length
+      });
+    } catch (error) {
+      console.error('Errore durante l\'importazione:', error);
+      res.status(500).json({ error: "Errore durante l'importazione del file" });
     }
   });
 
