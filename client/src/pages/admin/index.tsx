@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Loader2, Download, Trash2, Database, RefreshCw, Edit, Search } from "lucide-react";
+import { Upload, Loader2, Download, Trash2, Database, RefreshCw, Edit, Search, Printer } from "lucide-react"; // Added Printer import
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import {
@@ -171,14 +171,22 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-2xl mx-auto space-y-6">
-        <div className="flex items-center justify-between"> {/* Added div for better layout */}
+        <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Amministrazione</h1>
-          <Link href="/admin/database">
-            <Button variant="outline">
-              <Database className="h-4 w-4 mr-2" />
-              Configura Database
-            </Button>
-          </Link>
+          <div className="flex gap-2">
+            <Link href="/admin/database">
+              <Button variant="outline">
+                <Database className="h-4 w-4 mr-2" />
+                Configura Database
+              </Button>
+            </Link>
+            <Link href="/report">
+              <Button variant="outline">
+                <Printer className="h-4 w-4 mr-2" />
+                Configura Stampante
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Statistiche */}
