@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { queryClient } from "@/lib/queryClient";
 import { Product } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -12,7 +13,7 @@ interface PaymentProps {
 }
 
 export default function Payment({ cart, onComplete }: PaymentProps) {
-  const [cashReceived, setCashReceived] = useState(0);
+  const [cashReceived, setCashReceived] = useState<string>("");
   const { toast } = useToast();
 
   const total = cart.reduce(
@@ -20,7 +21,8 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
     0
   );
 
-  const change = cashReceived - total;
+  const cashReceivedNum = parseFloat(cashReceived) || 0;
+  const change = cashReceivedNum - total;
 
   const { mutate: completeSale, isPending } = useMutation({
     mutationFn: async () => {
@@ -51,7 +53,7 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
         description: "Stampa dello scontrino in corso"
       });
       onComplete();
-      setCashReceived(0);
+      setCashReceived("");
     },
     onError: () => {
       toast({
@@ -72,9 +74,15 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
           <span className="font-bold">€{total.toFixed(2)}</span>
         </div>
 
-        <div className="flex justify-between">
+        <div className="flex items-center gap-2">
           <span>Contanti ricevuti:</span>
-          <span>€{cashReceived.toFixed(2)}</span>
+          <Input
+            type="number"
+            value={cashReceived}
+            onChange={(e) => setCashReceived(e.target.value)}
+            placeholder="0.00"
+            className="w-24 text-right"
+          />
         </div>
 
         <div className="flex justify-between">
@@ -90,7 +98,7 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
           <Button
             key={amount}
             variant="outline"
-            onClick={() => setCashReceived(amount)}
+            onClick={() => setCashReceived(amount.toString())}
             disabled={isPending}
           >
             <EuroIcon className="mr-2 h-4 w-4" />
@@ -102,7 +110,7 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
       <Button
         className="w-full"
         size="lg"
-        disabled={cart.length === 0 || cashReceived < total || isPending}
+        disabled={cart.length === 0 || cashReceivedNum < total || isPending}
         onClick={() => completeSale()}
       >
         Completa Vendita
