@@ -1,14 +1,18 @@
 import type { Express } from "express";
 import { createServer } from "http";
 import { storage } from "./storage";
-import { insertProductSchema, insertQuickButtonSchema, insertDatabaseConfigSchema } from "@shared/schema";
+import { insertProductSchema, insertQuickButtonSchema, insertDatabaseConfigSchema, insertPrinterConfigSchema } from "@shared/schema";
 import { z } from "zod";
 import { eq, sql } from 'drizzle-orm';
 import { db } from "./db";
-import { products, quickButtons, databaseConfigs } from "@shared/schema";
+import { products, quickButtons, databaseConfigs, printerConfigs } from "@shared/schema";
 import multer from "multer";
 import { parse } from "csv-parse";
 import { Readable } from "stream";
+import { exec } from "child_process";
+import { promisify } from "util";
+
+const execAsync = promisify(exec);
 
 // Configurazione multer per l'upload dei file
 const upload = multer({ 
@@ -415,6 +419,65 @@ export async function registerRoutes(app: Express) {
     } catch (error) {
       console.error('Errore durante la creazione della vendita:', error);
       res.status(500).json({ error: "Impossibile completare la vendita" });
+    }
+  });
+
+  // Nuove route per la configurazione della stampante
+  app.get("/api/admin/printer-config", async (_req, res) => {
+    try {
+      const [config] = await db
+        .select()
+        .from(printerConfigs)
+        .orderBy(printerConfigs.updatedAt)
+        .limit(1);
+
+      res.json(config || null);
+    } catch (error) {
+      console.error('Errore nel recupero della configurazione stampante:', error);
+      res.status(500).json({ error: "Impossibile recuperare la configurazione" });
+    }
+  });
+
+  app.post("/api/admin/printer-config", async (req, res) => {
+    const result = insertPrinterConfigSchema.safeParse(req.body);
+    if (!result.success) {
+      res.status(400).json({ error: result.error });
+      return;
+    }
+
+    try {
+      // Rimuovi tutte le configurazioni esistenti
+      await db.delete(printerConfigs);
+
+      // Inserisci la nuova configurazione
+      const [config] = await db
+        .insert(printerConfigs)
+        .values(result.data)
+        .returning();
+
+      res.json(config);
+    } catch (error) {
+      console.error('Errore nel salvataggio della configurazione:', error);
+      res.status(500).json({ error: "Impossibile salvare la configurazione" });
+    }
+  });
+
+  app.get("/api/admin/available-printers", async (_req, res) => {
+    try {
+      // In Windows, possiamo usare il comando "wmic printer get name"
+      const { stdout } = await execAsync('wmic printer get name');
+
+      // Pulisci l'output e ottieni la lista delle stampanti
+      const printers = stdout
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line && line !== 'Name')
+        .sort();
+
+      res.json(printers);
+    } catch (error) {
+      console.error('Errore nel recupero delle stampanti:', error);
+      res.status(500).json({ error: "Impossibile recuperare le stampanti" });
     }
   });
 

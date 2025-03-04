@@ -70,12 +70,36 @@ export const appConfigs = pgTable("app_configs", {
   updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
 
+// Nuova tabella per le configurazioni della stampante
+export const printerConfigs = pgTable("printer_configs", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  printerName: varchar("printer_name", { length: 100 }).notNull(),
+  paperWidth: integer("paper_width").default(140),
+  paperHeight: integer("paper_height").default(199),
+  marginTop: integer("margin_top").default(0),
+  marginBottom: integer("margin_bottom").default(0),
+  marginLeft: integer("margin_left").default(0),
+  marginRight: integer("margin_right").default(0),
+  headerText: text("header_text"),
+  footerText: text("footer_text"),
+  logoEnabled: boolean("logo_enabled").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
 export const insertProductSchema = createInsertSchema(products).omit({ id: true });
 export const insertSaleSchema = createInsertSchema(sales).omit({ id: true, timestamp: true });
 export const insertSaleItemSchema = createInsertSchema(saleItems).omit({ id: true });
 export const insertQuickButtonSchema = createInsertSchema(quickButtons).omit({ id: true });
 export const insertDatabaseConfigSchema = createInsertSchema(databaseConfigs).omit({ id: true, lastSync: true, createdAt: true });
 export const insertAppConfigSchema = createInsertSchema(appConfigs).omit({ id: true, updatedAt: true });
+// Aggiungi i tipi e gli schema
+export const insertPrinterConfigSchema = createInsertSchema(printerConfigs).omit({ 
+  id: true, 
+  createdAt: true,
+  updatedAt: true 
+});
 
 export type Product = typeof products.$inferSelect;
 export type Sale = typeof sales.$inferSelect;
@@ -89,3 +113,5 @@ export type InsertSaleItem = z.infer<typeof insertSaleItemSchema>;
 export type InsertQuickButton = z.infer<typeof insertQuickButtonSchema>;
 export type InsertDatabaseConfig = z.infer<typeof insertDatabaseConfigSchema>;
 export type InsertAppConfig = z.infer<typeof insertAppConfigSchema>;
+export type PrinterConfig = typeof printerConfigs.$inferSelect;
+export type InsertPrinterConfig = z.infer<typeof insertPrinterConfigSchema>;
