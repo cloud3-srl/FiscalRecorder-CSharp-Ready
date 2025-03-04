@@ -84,6 +84,9 @@ export const printerConfigs = pgTable("printer_configs", {
   headerText: text("header_text"),
   footerText: text("footer_text"),
   logoEnabled: boolean("logo_enabled").default(false),
+  logoImage: text("logo_image"), // Campo per salvare il logo in base64
+  logoWidth: integer("logo_width").default(120), // Larghezza massima del logo in mm
+  logoHeight: integer("logo_height").default(40), // Altezza massima del logo in mm
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
@@ -95,10 +98,10 @@ export const insertQuickButtonSchema = createInsertSchema(quickButtons).omit({ i
 export const insertDatabaseConfigSchema = createInsertSchema(databaseConfigs).omit({ id: true, lastSync: true, createdAt: true });
 export const insertAppConfigSchema = createInsertSchema(appConfigs).omit({ id: true, updatedAt: true });
 // Aggiungi i tipi e gli schema
-export const insertPrinterConfigSchema = createInsertSchema(printerConfigs).omit({ 
-  id: true, 
+export const insertPrinterConfigSchema = createInsertSchema(printerConfigs).omit({
+  id: true,
   createdAt: true,
-  updatedAt: true 
+  updatedAt: true
 });
 
 export type Product = typeof products.$inferSelect;
