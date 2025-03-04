@@ -3,7 +3,7 @@ import { createServer } from "http";
 import { storage } from "./storage";
 import { insertProductSchema, insertQuickButtonSchema } from "@shared/schema";
 import { z } from "zod";
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { db } from "./db";
 import { products, quickButtons } from "@shared/schema";
 import multer from "multer";
@@ -19,23 +19,6 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express) {
-  // Products routes
-  app.get("/api/products", async (_req, res) => {
-    const products = await storage.getAllProducts();
-    res.json(products);
-  });
-
-  app.post("/api/products", async (req, res) => {
-    const result = insertProductSchema.safeParse(req.body);
-    if (!result.success) {
-      res.status(400).json({ error: result.error });
-      return;
-    }
-
-    const product = await storage.createProduct(result.data);
-    res.json(product);
-  });
-
   // Quick Buttons routes
   app.get("/api/quick-buttons", async (_req, res) => {
     try {
@@ -102,6 +85,57 @@ export async function registerRoutes(app: Express) {
 
     const button = await storage.updateQuickButton(id, result.data);
     res.json(button);
+  });
+
+
+  // Admin routes
+  app.get("/api/admin/stats", async (_req, res) => {
+    try {
+      const totalProducts = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(products)
+        .then(result => result[0].count);
+
+      // TODO: Implementare la logica per la cache e la sincronizzazione
+      const lastSync = null;
+      const cacheStatus = 'valid';
+
+      res.json({
+        totalProducts,
+        lastSync,
+        cacheStatus
+      });
+    } catch (error) {
+      console.error('Errore nel recupero delle statistiche:', error);
+      res.status(500).json({ error: "Impossibile recuperare le statistiche" });
+    }
+  });
+
+  app.post("/api/admin/clear-products", async (_req, res) => {
+    try {
+      await db.delete(products);
+      res.status(204).end();
+    } catch (error) {
+      console.error('Errore durante la pulizia dell\'archivio:', error);
+      res.status(500).json({ error: "Impossibile svuotare l'archivio" });
+    }
+  });
+
+  // Products routes
+  app.get("/api/products", async (_req, res) => {
+    const products = await storage.getAllProducts();
+    res.json(products);
+  });
+
+  app.post("/api/products", async (req, res) => {
+    const result = insertProductSchema.safeParse(req.body);
+    if (!result.success) {
+      res.status(400).json({ error: result.error });
+      return;
+    }
+
+    const product = await storage.createProduct(result.data);
+    res.json(product);
   });
 
   // Nuova route per l'importazione CSV
