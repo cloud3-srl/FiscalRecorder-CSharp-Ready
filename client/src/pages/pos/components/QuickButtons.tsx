@@ -8,6 +8,7 @@ import { Plus, Star, X, Pencil, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 interface QuickButtonsProps {
   onProductSelect: (product: Product) => void;
@@ -23,7 +24,7 @@ export default function QuickButtons({ onProductSelect }: QuickButtonsProps) {
   const [selectedPosition, setSelectedPosition] = useState<number | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [isEditMode, setIsEditMode] = useState(false);
-  const [selectedDepartment, setSelectedDepartment] = useState("1");
+  const [selectedTab, setSelectedTab] = useState("1"); // "1" per Reparto 1, "2" per Reparto 2
 
   const { data: products } = useQuery<Product[]>({
     queryKey: ['/api/products'],
@@ -38,19 +39,12 @@ export default function QuickButtons({ onProductSelect }: QuickButtonsProps) {
     product.code.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredButtons = quickButtons?.filter(button => 
-    button.department === parseInt(selectedDepartment)
-  );
-
   const { mutate: addQuickButton, isPending: isAddingButton } = useMutation({
     mutationFn: async (data: { productId: number, position: number }) => {
       const response = await fetch('/api/quick-buttons', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...data,
-          department: parseInt(selectedDepartment)
-        })
+        body: JSON.stringify(data)
       });
 
       if (!response.ok) {
@@ -114,83 +108,105 @@ export default function QuickButtons({ onProductSelect }: QuickButtonsProps) {
   }
 
   return (
-    <>
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold">Preferiti</h2>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsEditMode(!isEditMode)}
-            className={isEditMode ? "bg-muted" : ""}
-            title={isEditMode ? "Termina modifica" : "Modifica tasti rapidi"}
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h2 className="text-lg font-semibold">Preferiti</h2>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setIsEditMode(!isEditMode)}
+          className={isEditMode ? "bg-muted" : ""}
+          title={isEditMode ? "Termina modifica" : "Modifica tasti rapidi"}
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <Tabs value={selectedTab} onValueChange={setSelectedTab}>
+        <TabsList className="w-full">
+          <TabsTrigger 
+            value="1" 
+            className={cn(
+              "flex-1",
+              selectedTab === "1" ? "bg-blue-100 hover:bg-blue-200" : ""
+            )}
           >
-            <Pencil className="h-4 w-4" />
-          </Button>
-        </div>
+            REPARTO 1
+          </TabsTrigger>
+          <TabsTrigger 
+            value="2" 
+            className={cn(
+              "flex-1",
+              selectedTab === "2" ? "bg-red-100 hover:bg-red-200" : ""
+            )}
+          >
+            REPARTO 2
+          </TabsTrigger>
+          <TabsTrigger value="3" className="flex-1">REPARTO 3</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
-        <Tabs value={selectedDepartment} onValueChange={setSelectedDepartment}>
-          <TabsList className="w-full">
-            <TabsTrigger value="1" className="flex-1">REPARTO 1</TabsTrigger>
-            <TabsTrigger value="2" className="flex-1">REPARTO 2</TabsTrigger>
-            <TabsTrigger value="3" className="flex-1">REPARTO 3</TabsTrigger>
-          </TabsList>
-        </Tabs>
+      <div className={cn(
+        "grid grid-cols-4 gap-2",
+        selectedTab === "1" ? "bg-blue-50" : selectedTab === "2" ? "bg-red-50" : "",
+        "p-4 rounded-lg"
+      )}>
+        {gridPositions.map(position => {
+          const adjustedPosition = selectedTab === "2" ? position + 16 : selectedTab === "3" ? position + 32 : position;
+          const button = quickButtons?.find(b => b.position === adjustedPosition);
 
-        <div className="grid grid-cols-4 gap-2">
-          {gridPositions.map(position => {
-            const button = filteredButtons?.find(b => b.position === position);
-
-            return (
-              <Button
-                key={position}
-                variant="outline"
-                className="h-24 relative"
-                onClick={() => {
-                  if (isEditMode) {
-                    if (button) {
-                      removeQuickButton(button.id);
-                    } else {
-                      setSelectedPosition(position);
-                      setIsDialogOpen(true);
-                    }
-                  } else if (button?.product) {
-                    onProductSelect(button.product);
+          return (
+            <Button
+              key={position}
+              variant="outline"
+              className={cn(
+                "h-24 relative",
+                selectedTab === "1" ? "hover:bg-blue-100" : selectedTab === "2" ? "hover:bg-red-100" : ""
+              )}
+              onClick={() => {
+                if (isEditMode) {
+                  if (button) {
+                    removeQuickButton(button.id);
+                  } else {
+                    setSelectedPosition(adjustedPosition);
+                    setIsDialogOpen(true);
                   }
-                }}
-              >
-                {button?.product ? (
-                  <>
-                    {isEditMode && (
-                      <button
-                        className="absolute top-1 right-1 p-1 hover:bg-red-100 rounded"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeQuickButton(button.id);
-                        }}
-                        title="Rimuovi dai preferiti"
-                      >
-                        <X className="h-4 w-4 text-red-500" />
-                      </button>
-                    )}
+                } else if (button?.product) {
+                  onProductSelect(button.product);
+                }
+              }}
+            >
+              {button?.product ? (
+                <>
+                  {isEditMode && (
+                    <button
+                      className="absolute top-1 right-1 p-1 hover:bg-red-100 rounded"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeQuickButton(button.id);
+                      }}
+                      title="Rimuovi dai preferiti"
+                    >
+                      <X className="h-4 w-4 text-red-500" />
+                    </button>
+                  )}
 
-                    <div className="flex flex-col items-center justify-center text-center">
-                      <Star className="w-8 h-8 mb-1 text-yellow-500" />
-                      <div className="text-sm font-medium truncate w-full">
-                        {button.product.name}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        €{button.product.price.toString()}
-                      </div>
+                  <div className="flex flex-col items-center justify-center text-center">
+                    <Star className="w-8 h-8 mb-1 text-yellow-500" />
+                    <div className="text-sm font-medium truncate w-full">
+                      {button.product.name}
                     </div>
-                  </>
-                ) : (
-                  <Plus className="w-8 h-8 text-gray-400" />
-                )}
-              </Button>
-            );
-          })}
-        </div>
+                    <div className="text-xs text-muted-foreground">
+                      €{button.product.price.toString()}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <Plus className="w-8 h-8 text-gray-400" />
+              )}
+            </Button>
+          );
+        })}
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -232,6 +248,6 @@ export default function QuickButtons({ onProductSelect }: QuickButtonsProps) {
           </div>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }

@@ -33,7 +33,6 @@ export const quickButtons = pgTable("quick_buttons", {
   id: serial("id").primaryKey(),
   productId: integer("product_id").notNull(),
   position: integer("position").notNull(),
-  department: integer("department").notNull().default(1),
   label: varchar("label", { length: 50 }),
   active: boolean("active").default(true)
 });
