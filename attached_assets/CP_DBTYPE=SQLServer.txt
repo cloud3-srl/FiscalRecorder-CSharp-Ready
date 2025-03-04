@@ -1,0 +1,88 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2821
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 CP_DBTYPE='SQLServer'\
+CP_ODBCCONN='Driver=SQL Server Native Client 11.0;SERVER=CL3-DEVSRV;DATABASE=AHR_POG;UID=sa;PWD=Nuvola3;TRUSTED_CONNECTION=NO;'\
+i_LoadXDC =.T.\
+g_CheckUNC =.T.\
+i_bDisablePostin =.F.\
+i_bDisableBackgroundimage =.T.\
+g_APPTITLEAHE ='  ** POG Srl ** '\
+public g_NOINDEXES\
+g_NOINDEXES = .F.\
+public g_NOINDEXES_INV\
+g_NOINDEXES_INV = .F.\
+public g_PRTJOLLY\
+g_PRTJOLLY = "#"\
+public g_TbBtnSpEfc\
+g_TbBtnSpEfc =0\
+public g_BtnSpEfc\
+g_BtnSpEfc =0\
+public g_PrnBtnSpEfc\
+g_PrnBtnSpEfc =0\
+public g_CRYPTSilentConnect\
+g_CRYPTSilentConnect =.F.\
+Public i_bnogdi\
+i_bnogdi = .T.\
+* public g_exlexpfas\
+* g_exlexpfas = 0\
+public g_licenzaname\
+g_licenzaname = 'P:\\Ad_Hoc_Oil\\ahr80_p784\\exe\\LICENZA_POG.lic'\
+\
+PUBLIC bLoadRuntimeConfig\
+bLoadRuntimeConfig=.T.\
+\
+ON KEY LABEL ALT+F10 DEBUG\
+\
+public i_bNoGDI\
+i_bNoGDI=.T.\
+\
+public g_CRMPARTENZA\
+g_CRMPARTENZA = 'Pettineo'\
+\
+\
+public g_Debug_Print\
+g_Debug_Print ="S"\
+\
+public g_LED_BIANCO\
+g_LED_BIANCO = '.\\custom\\bmp\\bianco1.ico'\
+public g_LED_ARANCIO\
+g_LED_ARANCIO = '.\\custom\\bmp\\arancio1.ico'\
+public g_LED_VERDE\
+g_LED_VERDE = '.\\custom\\bmp\\verde1.ico'\
+public g_LED_ROSSO\
+g_LED_ROSSO = '.\\custom\\bmp\\rosso1.ico'\
+public g_LED_BLU\
+g_LED_BLU = '.\\custom\\bmp\\blu1.ico'\
+\
+public g_ORGCON\
+g_ORGCON = 'Mio Organismo'\
+public g_CODOPE\
+g_CODOPE= 'Mio codice'\
+\
+\
+Public g_ArrayFieldName, g_ArrayFieldPosition\
+Dimension g_ArrayFieldName[6], g_ArrayFieldPosition[6]\
+\
+g_ArrayFieldName[1]= 'CODICE'\
+g_ArrayFieldName[2]= 'LOTTO'\
+g_ArrayFieldName[3]= 'CODMAG'\
+g_ArrayFieldName[4]= 'UNIMIS'\
+g_ArrayFieldName[5]= 'QTAMOV'\
+g_ArrayFieldName[6]= ''\
+\
+g_ArrayFieldPosition[1]=1\
+g_ArrayFieldPosition[2]=21\
+g_ArrayFieldPosition[3]=41\
+g_ArrayFieldPosition[4]=46\
+g_ArrayFieldPosition[5]=49\
+g_ArrayFieldPosition[6]=0\
+\
+*         11111111112|22222222233333333334|44444|444|4555555555566666 \
+*12345678901234567890|12345678901234567890|12345|678|9012345678901234\
+*CODICE              |LOTTO               |MAG  |UM |QTAMOV          \
+}

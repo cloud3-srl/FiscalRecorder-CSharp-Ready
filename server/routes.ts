@@ -1,11 +1,11 @@
 import type { Express } from "express";
 import { createServer } from "http";
 import { storage } from "./storage";
-import { insertProductSchema, insertQuickButtonSchema } from "@shared/schema";
+import { insertProductSchema, insertQuickButtonSchema, insertDatabaseConfigSchema } from "@shared/schema";
 import { z } from "zod";
 import { eq, sql } from 'drizzle-orm';
 import { db } from "./db";
-import { products, quickButtons } from "@shared/schema";
+import { products, quickButtons, databaseConfigs } from "@shared/schema";
 import multer from "multer";
 import { parse } from "csv-parse";
 import { Readable } from "stream";
@@ -118,6 +118,97 @@ export async function registerRoutes(app: Express) {
     } catch (error) {
       console.error('Errore durante la pulizia dell\'archivio:', error);
       res.status(500).json({ error: "Impossibile svuotare l'archivio" });
+    }
+  });
+
+  // Nuove route per la configurazione del database
+  app.get("/api/admin/database-configs", async (_req, res) => {
+    try {
+      const configs = await db
+        .select()
+        .from(databaseConfigs)
+        .orderBy(databaseConfigs.createdAt);
+
+      res.json(configs);
+    } catch (error) {
+      console.error('Errore nel recupero delle configurazioni:', error);
+      res.status(500).json({ error: "Impossibile recuperare le configurazioni" });
+    }
+  });
+
+  app.post("/api/admin/database-configs", async (req, res) => {
+    const result = insertDatabaseConfigSchema.safeParse(req.body);
+    if (!result.success) {
+      res.status(400).json({ error: result.error });
+      return;
+    }
+
+    try {
+      // Se la nuova configurazione è attiva, disattiva tutte le altre
+      if (result.data.isActive) {
+        await db
+          .update(databaseConfigs)
+          .set({ isActive: false });
+      }
+
+      const [config] = await db
+        .insert(databaseConfigs)
+        .values(result.data)
+        .returning();
+
+      res.json(config);
+    } catch (error) {
+      console.error('Errore nel salvataggio della configurazione:', error);
+      res.status(500).json({ error: "Impossibile salvare la configurazione" });
+    }
+  });
+
+  app.post("/api/admin/test-connection", async (req, res) => {
+    const result = insertDatabaseConfigSchema.safeParse(req.body);
+    if (!result.success) {
+      res.status(400).json({ error: result.error });
+      return;
+    }
+
+    try {
+      // TODO: Implementare il test della connessione MSSQL
+      // Per ora restituiamo sempre successo
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Errore nel test della connessione:', error);
+      res.status(500).json({ error: "Impossibile testare la connessione" });
+    }
+  });
+
+  app.patch("/api/admin/database-configs/:id/toggle", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      res.status(400).json({ error: "Invalid ID" });
+      return;
+    }
+
+    try {
+      // Prima disattiva tutte le configurazioni
+      await db
+        .update(databaseConfigs)
+        .set({ isActive: false });
+
+      // Poi attiva quella selezionata
+      const [config] = await db
+        .update(databaseConfigs)
+        .set({ isActive: true })
+        .where(eq(databaseConfigs.id, id))
+        .returning();
+
+      if (!config) {
+        res.status(404).json({ error: "Configurazione non trovata" });
+        return;
+      }
+
+      res.json(config);
+    } catch (error) {
+      console.error('Errore nell\'aggiornamento della configurazione:', error);
+      res.status(500).json({ error: "Impossibile aggiornare la configurazione" });
     }
   });
 
