@@ -34,10 +34,20 @@ export default function AdminPage() {
       }
 
       const data = await response.json();
-      toast({
-        title: "Importazione completata",
-        description: `Importati ${data.imported} prodotti con successo`
-      });
+
+      if (data.errors && data.errors.length > 0) {
+        toast({
+          title: "Importazione completata con errori",
+          description: `Importati ${data.imported} prodotti su ${data.total}. ${data.errors.length} errori riscontrati.`,
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Importazione completata",
+          description: `Importati ${data.imported} prodotti con successo`
+        });
+      }
+
       setFile(null);
     } catch (error) {
       toast({
@@ -54,10 +64,10 @@ export default function AdminPage() {
     <div className="min-h-screen bg-background p-8">
       <div className="max-w-2xl mx-auto">
         <h1 className="text-2xl font-bold mb-6">Amministrazione</h1>
-        
+
         <Card className="p-6">
           <h2 className="text-lg font-semibold mb-4">Importa Prodotti (CSV)</h2>
-          
+
           <div className="space-y-4">
             <div className="flex items-center gap-4">
               <Input
@@ -81,12 +91,19 @@ export default function AdminPage() {
 
             <div className="text-sm text-muted-foreground">
               Il file CSV deve contenere le seguenti colonne:
-              <ul className="list-disc list-inside mt-2">
-                <li>code (Codice prodotto)</li>
-                <li>name (Nome prodotto)</li>
-                <li>price (Prezzo)</li>
-                <li>category (Categoria - opzionale)</li>
-                <li>description (Descrizione - opzionale)</li>
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>ARCODART (Codice articolo - obbligatorio)</li>
+                <li>ARDESART (Descrizione articolo - obbligatorio)</li>
+                <li>LIPREZZO (Prezzo - obbligatorio)</li>
+                <li>LICODLIS (Codice listino)</li>
+                <li>LIDATATT (Data attivazione - formato YYYY-MM-DD)</li>
+                <li>LIDATDIS (Data disattivazione - formato YYYY-MM-DD)</li>
+                <li>LIUNIMIS (Unità di misura)</li>
+                <li>cpccchk (Flag di controllo)</li>
+                <li>LISCONT1 (Primo sconto)</li>
+                <li>LISCONT2 (Secondo sconto)</li>
+                <li>LISCONT3 (Terzo sconto)</li>
+                <li>LISCONT4 (Quarto sconto)</li>
               </ul>
             </div>
           </div>

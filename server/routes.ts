@@ -167,33 +167,56 @@ export async function registerRoutes(app: Express) {
       // Parse CSV
       const parser = parse(fileContent, {
         columns: true,
-        skip_empty_lines: true
+        skip_empty_lines: true,
+        trim: true
       });
 
       // Leggi tutti i record
       for await (const record of parser) {
         records.push({
-          code: record.code,
-          name: record.name,
-          price: record.price,
-          category: record.category || null,
-          description: record.description || null
+          code: record.ARCODART,
+          name: record.ARDESART,
+          price: record.LIPREZZO,
+          listCode: record.LICODLIS,
+          activationDate: record.LIDATATT ? new Date(record.LIDATATT) : null,
+          deactivationDate: record.LIDATDIS ? new Date(record.LIDATDIS) : null,
+          unitOfMeasure: record.LIUNIMIS,
+          controlFlag: record.cpccchk,
+          discount1: record.LISCONT1 || null,
+          discount2: record.LISCONT2 || null,
+          discount3: record.LISCONT3 || null,
+          discount4: record.LISCONT4 || null
         });
       }
 
       // Valida e importa i prodotti
       const importedProducts = [];
+      const errors = [];
+
       for (const record of records) {
         const result = insertProductSchema.safeParse(record);
         if (result.success) {
-          const product = await storage.createProduct(result.data);
-          importedProducts.push(product);
+          try {
+            const product = await storage.createProduct(result.data);
+            importedProducts.push(product);
+          } catch (error) {
+            errors.push({
+              code: record.code,
+              error: `Errore durante l'inserimento: ${error.message}`
+            });
+          }
+        } else {
+          errors.push({
+            code: record.code,
+            error: `Validazione fallita: ${result.error.message}`
+          });
         }
       }
 
       res.json({ 
         imported: importedProducts.length,
-        total: records.length
+        total: records.length,
+        errors: errors.length > 0 ? errors : undefined
       });
     } catch (error) {
       console.error('Errore durante l\'importazione:', error);
