@@ -5,15 +5,18 @@ import { Input } from "@/components/ui/input";
 import { queryClient } from "@/lib/queryClient";
 import { Product } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { EuroIcon } from "lucide-react";
+import { EuroIcon, CreditCard, QrCode } from "lucide-react";
 
 interface PaymentProps {
   cart: Array<{product: Product, quantity: number}>;
   onComplete: () => void;
 }
 
+type PaymentMethod = 'contanti' | 'carte' | 'satispay';
+
 export default function Payment({ cart, onComplete }: PaymentProps) {
   const [cashReceived, setCashReceived] = useState<string>("");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('contanti');
   const { toast } = useToast();
 
   const total = cart.reduce(
@@ -31,7 +34,7 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           total: total.toFixed(2),
-          paymentMethod: 'contanti',
+          paymentMethod,
           items: cart.map(item => ({
             productId: item.product.id,
             quantity: item.quantity,
@@ -54,6 +57,7 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
       });
       onComplete();
       setCashReceived("");
+      setPaymentMethod('contanti');
     },
     onError: () => {
       toast({
@@ -74,43 +78,77 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
           <span className="font-bold">€{total.toFixed(2)}</span>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span>Contanti ricevuti:</span>
-          <Input
-            type="number"
-            value={cashReceived}
-            onChange={(e) => setCashReceived(e.target.value)}
-            placeholder="0.00"
-            className="w-24 text-right"
-          />
-        </div>
-
-        <div className="flex justify-between">
-          <span>Resto:</span>
-          <span className="font-bold text-green-600">
-            €{Math.max(0, change).toFixed(2)}
-          </span>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-3 gap-2">
-        {[5, 10, 20, 50, 100].map(amount => (
+        {/* Metodi di pagamento */}
+        <div className="grid grid-cols-3 gap-2">
           <Button
-            key={amount}
-            variant="outline"
-            onClick={() => setCashReceived(amount.toString())}
-            disabled={isPending}
+            variant={paymentMethod === 'contanti' ? 'default' : 'outline'}
+            onClick={() => setPaymentMethod('contanti')}
           >
             <EuroIcon className="mr-2 h-4 w-4" />
-            {amount}
+            Contanti
           </Button>
-        ))}
+          <Button
+            variant={paymentMethod === 'carte' ? 'default' : 'outline'}
+            onClick={() => setPaymentMethod('carte')}
+          >
+            <CreditCard className="mr-2 h-4 w-4" />
+            Carte
+          </Button>
+          <Button
+            variant={paymentMethod === 'satispay' ? 'default' : 'outline'}
+            onClick={() => setPaymentMethod('satispay')}
+          >
+            <QrCode className="mr-2 h-4 w-4" />
+            Satispay
+          </Button>
+        </div>
+
+        {/* Input contanti e resto solo se il metodo è contanti */}
+        {paymentMethod === 'contanti' && (
+          <>
+            <div className="flex items-center gap-2">
+              <span>Contanti ricevuti:</span>
+              <Input
+                type="number"
+                value={cashReceived}
+                onChange={(e) => setCashReceived(e.target.value)}
+                placeholder="0.00"
+                className="w-24 text-right"
+              />
+            </div>
+
+            <div className="flex justify-between">
+              <span>Resto:</span>
+              <span className="font-bold text-green-600">
+                €{Math.max(0, change).toFixed(2)}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              {[5, 10, 20, 50, 100].map(amount => (
+                <Button
+                  key={amount}
+                  variant="outline"
+                  onClick={() => setCashReceived(amount.toString())}
+                  disabled={isPending}
+                >
+                  <EuroIcon className="mr-2 h-4 w-4" />
+                  {amount}
+                </Button>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
       <Button
         className="w-full"
         size="lg"
-        disabled={cart.length === 0 || cashReceivedNum < total || isPending}
+        disabled={
+          cart.length === 0 || 
+          (paymentMethod === 'contanti' && cashReceivedNum < total) || 
+          isPending
+        }
         onClick={() => completeSale()}
       >
         Completa Vendita
