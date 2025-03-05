@@ -6,6 +6,7 @@ import { queryClient } from "@/lib/queryClient";
 import { Product } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { EuroIcon, CreditCard, QrCode } from "lucide-react";
+import NumericKeypad from "./NumericKeypad";
 
 interface PaymentProps {
   cart: Array<{product: Product, quantity: number}>;
@@ -160,36 +161,21 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
         {/* Input contanti e resto solo se il metodo è contanti */}
         {paymentMethod === 'contanti' && (
           <>
-            <div className="flex items-center gap-2">
-              <span>Contanti ricevuti:</span>
-              <Input
-                type="number"
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm font-medium">
+                <span>Contanti ricevuti:</span>
+                <span>€{cashReceived || '0.00'}</span>
+              </div>
+              <NumericKeypad
                 value={cashReceived}
-                onChange={(e) => setCashReceived(e.target.value)}
-                placeholder="0.00"
-                className="w-24 text-right"
+                onChange={setCashReceived}
               />
-            </div>
-
-            <div className="flex justify-between">
-              <span>Resto:</span>
-              <span className="font-bold text-green-600">
-                €{Math.max(0, change).toFixed(2)}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2">
-              {[5, 10, 20, 50, 100].map(amount => (
-                <Button
-                  key={amount}
-                  variant="outline"
-                  onClick={() => setCashReceived(amount.toString())}
-                  disabled={isPending}
-                >
-                  <EuroIcon className="mr-2 h-4 w-4" />
-                  {amount}
-                </Button>
-              ))}
+              <div className="flex justify-between font-medium">
+                <span>Resto:</span>
+                <span className="text-green-600">
+                  €{Math.max(0, change).toFixed(2)}
+                </span>
+              </div>
             </div>
           </>
         )}
