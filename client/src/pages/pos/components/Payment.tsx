@@ -131,7 +131,7 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
               onChange={(e) => setDiscountPercent(e.target.value)}
               onFocus={() => setInputFocus('total')}
               placeholder={discountForce ? "Valore" : "Percentuale"}
-              className="w-24"
+              className="w-full text-right text-2xl"
               autoFocus
             />
             <Button
