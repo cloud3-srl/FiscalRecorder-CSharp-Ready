@@ -17,12 +17,25 @@ type PaymentMethod = 'contanti' | 'carte' | 'satispay';
 export default function Payment({ cart, onComplete }: PaymentProps) {
   const [cashReceived, setCashReceived] = useState<string>("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('contanti');
+  const [discountPercent, setDiscountPercent] = useState<string>("0");
+  const [discountForce, setDiscountForce] = useState<boolean>(false);
   const { toast } = useToast();
 
-  const total = cart.reduce(
+  const subtotal = cart.reduce(
     (sum, item) => sum + (parseFloat(item.product.price.toString()) * item.quantity),
     0
   );
+
+  // Calcolo sconto
+  const discountAmount = discountForce
+    ? parseFloat(discountPercent) || 0
+    : (subtotal * (parseFloat(discountPercent) || 0)) / 100;
+
+  // Totale dopo lo sconto
+  const total = subtotal - discountAmount;
+
+  // Calcolo IVA (22%)
+  const vatAmount = total * 0.22;
 
   const cashReceivedNum = parseFloat(cashReceived) || 0;
   const change = cashReceivedNum - total;
@@ -35,6 +48,8 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
         body: JSON.stringify({
           total: total.toFixed(2),
           paymentMethod,
+          discount: discountAmount.toFixed(2),
+          discountPercent: discountForce ? null : parseFloat(discountPercent) || 0,
           items: cart.map(item => ({
             productId: item.product.id,
             quantity: item.quantity,
@@ -58,6 +73,8 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
       onComplete();
       setCashReceived("");
       setPaymentMethod('contanti');
+      setDiscountPercent("0");
+      setDiscountForce(false);
     },
     onError: () => {
       toast({
@@ -74,8 +91,45 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
 
       <div className="space-y-2">
         <div className="flex justify-between">
-          <span>Totale:</span>
-          <span className="font-bold">€{total.toFixed(2)}</span>
+          <span>Subtotale:</span>
+          <span className="font-bold">€{subtotal.toFixed(2)}</span>
+        </div>
+
+        {/* Sezione Sconto */}
+        <div className="space-y-2 border-t pt-2">
+          <div className="flex items-center gap-2">
+            <Input
+              type="number"
+              value={discountPercent}
+              onChange={(e) => setDiscountPercent(e.target.value)}
+              placeholder={discountForce ? "Valore" : "Percentuale"}
+              className="w-24"
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setDiscountForce(!discountForce)}
+              className="text-xs"
+            >
+              {discountForce ? "€" : "%"}
+            </Button>
+          </div>
+          <div className="flex justify-between text-sm text-muted-foreground">
+            <span>Sconto:</span>
+            <span>€{discountAmount.toFixed(2)}</span>
+          </div>
+        </div>
+
+        {/* IVA e Totale */}
+        <div className="space-y-2 border-t pt-2">
+          <div className="flex justify-between text-sm">
+            <span>IVA (22%):</span>
+            <span>€{vatAmount.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between text-lg font-bold">
+            <span>Totale:</span>
+            <span>€{total.toFixed(2)}</span>
+          </div>
         </div>
 
         {/* Metodi di pagamento */}
