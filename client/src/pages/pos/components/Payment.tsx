@@ -21,7 +21,7 @@ type InputFocus = 'total' | 'cash';
 export default function Payment({ cart, onComplete }: PaymentProps) {
   const [cashReceived, setCashReceived] = useState<string>("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('contanti');
-  const [discountPercent, setDiscountPercent] = useState<string>("0");
+  const [manualTotal, setManualTotal] = useState<string>("");
   const [discountForce, setDiscountForce] = useState<boolean>(false);
   const [inputFocus, setInputFocus] = useState<InputFocus>('total');
   const { toast } = useToast();
@@ -32,13 +32,10 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
     0
   );
 
-  // Calcolo sconto
-  const discountAmount = discountForce
-    ? parseFloat(discountPercent) || 0
-    : (subtotal * (parseFloat(discountPercent) || 0)) / 100;
-
-  // Totale dopo lo sconto
-  const total = subtotal - discountAmount;
+  // Calcola lo sconto basato sul totale manuale se presente
+  const total = manualTotal ? parseFloat(manualTotal) : subtotal;
+  const discountAmount = subtotal - total;
+  const discountPercent = ((discountAmount / subtotal) * 100).toFixed(2);
 
   // Calcolo IVA (22%)
   const vatAmount = total * 0.22;
@@ -48,7 +45,7 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
 
   const handleKeypadInput = (value: string) => {
     if (inputFocus === 'total') {
-      setDiscountPercent(value);
+      setManualTotal(value);
     } else {
       setCashReceived(value);
     }
@@ -60,7 +57,7 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
         total: total.toFixed(2),
         paymentMethod,
         discount: discountAmount.toFixed(2),
-        discountPercent: discountForce ? null : parseFloat(discountPercent) || 0,
+        discountPercent: parseFloat(discountPercent),
         items: cart.map(item => ({
           productId: item.product.id,
           quantity: item.quantity,
@@ -96,8 +93,8 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
       });
       onComplete();
       setCashReceived("");
+      setManualTotal("");
       setPaymentMethod('contanti');
-      setDiscountPercent("0");
       setDiscountForce(false);
       setInputFocus('total');
     },
@@ -122,30 +119,20 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
           <span className="font-bold">€{subtotal.toFixed(2)}</span>
         </div>
 
-        {/* Sezione Sconto */}
+        {/* Sezione Totale */}
         <div className="space-y-2 border-t pt-2">
-          <div className="flex items-center gap-2">
-            <Input
-              type="text"
-              value={discountPercent}
-              onChange={(e) => setDiscountPercent(e.target.value)}
-              onFocus={() => setInputFocus('total')}
-              placeholder={discountForce ? "Valore" : "Percentuale"}
-              className="w-full text-right text-2xl"
-              autoFocus
-            />
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setDiscountForce(!discountForce)}
-              className="text-xs"
-            >
-              {discountForce ? "€" : "%"}
-            </Button>
-          </div>
+          <Input
+            type="text"
+            value={manualTotal}
+            onChange={(e) => setManualTotal(e.target.value)}
+            onFocus={() => setInputFocus('total')}
+            placeholder="0.00"
+            className="w-full text-right text-2xl"
+            autoFocus
+          />
           <div className="flex justify-between text-sm text-muted-foreground">
             <span>Sconto:</span>
-            <span>€{discountAmount.toFixed(2)}</span>
+            <span>€{discountAmount.toFixed(2)} ({discountPercent}%)</span>
           </div>
         </div>
 
@@ -213,7 +200,7 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
         )}
 
         <NumericKeypad
-          value={inputFocus === 'total' ? discountPercent : cashReceived}
+          value={inputFocus === 'total' ? manualTotal : cashReceived}
           onChange={handleKeypadInput}
         />
       </div>
