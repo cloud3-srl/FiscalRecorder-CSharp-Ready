@@ -14,14 +14,14 @@ interface PaymentProps {
 }
 
 type PaymentMethod = 'contanti' | 'carte' | 'satispay';
-type InputFocus = 'discount' | 'cash';
+type InputFocus = 'total' | 'cash';
 
 export default function Payment({ cart, onComplete }: PaymentProps) {
   const [cashReceived, setCashReceived] = useState<string>("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('contanti');
   const [discountPercent, setDiscountPercent] = useState<string>("0");
   const [discountForce, setDiscountForce] = useState<boolean>(false);
-  const [inputFocus, setInputFocus] = useState<InputFocus>('discount');
+  const [inputFocus, setInputFocus] = useState<InputFocus>('total');
   const { toast } = useToast();
 
   const subtotal = cart.reduce(
@@ -44,7 +44,7 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
   const change = cashReceivedNum - total;
 
   const handleKeypadInput = (value: string) => {
-    if (inputFocus === 'discount') {
+    if (inputFocus === 'total') {
       setDiscountPercent(value);
     } else {
       setCashReceived(value);
@@ -86,7 +86,7 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
       setPaymentMethod('contanti');
       setDiscountPercent("0");
       setDiscountForce(false);
-      setInputFocus('discount');
+      setInputFocus('total');
     },
     onError: () => {
       toast({
@@ -114,9 +114,10 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
               type="text"
               value={discountPercent}
               onChange={(e) => setDiscountPercent(e.target.value)}
-              onFocus={() => setInputFocus('discount')}
+              onFocus={() => setInputFocus('total')}
               placeholder={discountForce ? "Valore" : "Percentuale"}
               className="w-24"
+              autoFocus
             />
             <Button
               variant="ghost"
@@ -197,7 +198,7 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
         )}
 
         <NumericKeypad
-          value={inputFocus === 'discount' ? discountPercent : cashReceived}
+          value={inputFocus === 'total' ? discountPercent : cashReceived}
           onChange={handleKeypadInput}
         />
       </div>
