@@ -7,6 +7,8 @@ import { Product } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { EuroIcon, CreditCard, QrCode } from "lucide-react";
 import NumericKeypad from "./NumericKeypad";
+import { useOfflineSync } from "@/hooks/use-offline";
+import { savePendingSale } from "@/lib/indexedDB";
 
 interface PaymentProps {
   cart: Array<{product: Product, quantity: number}>;
@@ -23,6 +25,7 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
   const [discountForce, setDiscountForce] = useState<boolean>(false);
   const [inputFocus, setInputFocus] = useState<InputFocus>('total');
   const { toast } = useToast();
+  const { isOnline } = useOfflineSync();
 
   const subtotal = cart.reduce(
     (sum, item) => sum + (parseFloat(item.product.price.toString()) * item.quantity),
@@ -53,20 +56,28 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
 
   const { mutate: completeSale, isPending } = useMutation({
     mutationFn: async () => {
+      const saleData = {
+        total: total.toFixed(2),
+        paymentMethod,
+        discount: discountAmount.toFixed(2),
+        discountPercent: discountForce ? null : parseFloat(discountPercent) || 0,
+        items: cart.map(item => ({
+          productId: item.product.id,
+          quantity: item.quantity,
+          price: parseFloat(item.product.price.toString()).toFixed(2)
+        }))
+      };
+
+      if (!isOnline) {
+        // Salva la vendita in IndexedDB se offline
+        await savePendingSale(saleData, saleData.items);
+        return { message: "Vendita salvata offline" };
+      }
+
       const response = await fetch('/api/sales', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          total: total.toFixed(2),
-          paymentMethod,
-          discount: discountAmount.toFixed(2),
-          discountPercent: discountForce ? null : parseFloat(discountPercent) || 0,
-          items: cart.map(item => ({
-            productId: item.product.id,
-            quantity: item.quantity,
-            price: parseFloat(item.product.price.toString()).toFixed(2)
-          }))
-        })
+        body: JSON.stringify(saleData)
       });
 
       if (!response.ok) {
@@ -78,8 +89,10 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/sales'] });
       toast({
-        title: "Vendita completata",
-        description: "Stampa dello scontrino in corso"
+        title: isOnline ? "Vendita completata" : "Vendita salvata offline",
+        description: isOnline 
+          ? "Stampa dello scontrino in corso"
+          : "La vendita verrà sincronizzata quando la connessione sarà ripristinata"
       });
       onComplete();
       setCashReceived("");
@@ -99,7 +112,9 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
 
   return (
     <div className="space-y-4">
-      <div className="text-lg font-semibold">Pagamento</div>
+      <div className="text-lg font-semibold">
+        Pagamento {!isOnline && "(Modalità Offline)"}
+      </div>
 
       <div className="space-y-2">
         <div className="flex justify-between">
@@ -213,7 +228,7 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
         }
         onClick={() => completeSale()}
       >
-        Completa Vendita
+        {isOnline ? "Completa Vendita" : "Salva Vendita Offline"}
       </Button>
     </div>
   );
