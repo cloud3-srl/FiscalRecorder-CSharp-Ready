@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,12 +14,14 @@ interface PaymentProps {
 }
 
 type PaymentMethod = 'contanti' | 'carte' | 'satispay';
+type InputFocus = 'discount' | 'cash';
 
 export default function Payment({ cart, onComplete }: PaymentProps) {
   const [cashReceived, setCashReceived] = useState<string>("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('contanti');
   const [discountPercent, setDiscountPercent] = useState<string>("0");
   const [discountForce, setDiscountForce] = useState<boolean>(false);
+  const [inputFocus, setInputFocus] = useState<InputFocus>('discount');
   const { toast } = useToast();
 
   const subtotal = cart.reduce(
@@ -40,6 +42,14 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
 
   const cashReceivedNum = parseFloat(cashReceived) || 0;
   const change = cashReceivedNum - total;
+
+  const handleKeypadInput = (value: string) => {
+    if (inputFocus === 'discount') {
+      setDiscountPercent(value);
+    } else {
+      setCashReceived(value);
+    }
+  };
 
   const { mutate: completeSale, isPending } = useMutation({
     mutationFn: async () => {
@@ -76,6 +86,7 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
       setPaymentMethod('contanti');
       setDiscountPercent("0");
       setDiscountForce(false);
+      setInputFocus('discount');
     },
     onError: () => {
       toast({
@@ -100,9 +111,10 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
         <div className="space-y-2 border-t pt-2">
           <div className="flex items-center gap-2">
             <Input
-              type="number"
+              type="text"
               value={discountPercent}
               onChange={(e) => setDiscountPercent(e.target.value)}
+              onFocus={() => setInputFocus('discount')}
               placeholder={discountForce ? "Valore" : "Percentuale"}
               className="w-24"
             />
@@ -166,9 +178,13 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
                 <span>Contanti ricevuti:</span>
                 <span>€{cashReceived || '0.00'}</span>
               </div>
-              <NumericKeypad
+              <Input
+                type="text"
                 value={cashReceived}
-                onChange={setCashReceived}
+                onChange={(e) => setCashReceived(e.target.value)}
+                onFocus={() => setInputFocus('cash')}
+                className="w-full text-right text-2xl"
+                placeholder="Contanti ricevuti"
               />
               <div className="flex justify-between font-medium">
                 <span>Resto:</span>
@@ -179,6 +195,11 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
             </div>
           </>
         )}
+
+        <NumericKeypad
+          value={inputFocus === 'discount' ? discountPercent : cashReceived}
+          onChange={handleKeypadInput}
+        />
       </div>
 
       <Button

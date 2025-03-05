@@ -2,17 +2,14 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import ProductGrid from "./components/ProductGrid";
 import QuickButtons from "./components/QuickButtons";
-import NumericKeypad from "./components/NumericKeypad";
 import Cart from "./components/Cart";
 import Payment from "./components/Payment";
 import { Product } from "@shared/schema";
 
 export default function POS() {
   const [cart, setCart] = useState<Array<{product: Product, quantity: number}>>([]);
-  const [selectedQuantity, setSelectedQuantity] = useState<string>("1");
 
-  const addToCart = (product: Product) => {
-    const quantity = parseFloat(selectedQuantity) || 1;
+  const addToCart = (product: Product, quantity: number = 1) => {
     const existingItem = cart.find(item => item.product.id === product.id);
 
     if (existingItem) {
@@ -24,32 +21,23 @@ export default function POS() {
     } else {
       setCart([...cart, { product, quantity }]);
     }
-    setSelectedQuantity("1");
   };
 
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto p-4">
         <div className="grid grid-cols-12 gap-4">
-          {/* Left side - Products and Keypad */}
+          {/* Left side - Products */}
           <div className="col-span-8">
             {/* Top area for product grid */}
             <Card className="p-4 mb-4">
-              <ProductGrid onProductSelect={addToCart} />
+              <ProductGrid onProductSelect={(product) => addToCart(product)} />
             </Card>
 
-            {/* Bottom area with quick buttons and keypad */}
-            <div className="grid grid-cols-2 gap-4">
-              <Card className="p-4">
-                <QuickButtons onProductSelect={addToCart} />
-              </Card>
-              <Card className="p-4">
-                <NumericKeypad 
-                  value={selectedQuantity}
-                  onChange={setSelectedQuantity}
-                />
-              </Card>
-            </div>
+            {/* Bottom area with quick buttons */}
+            <Card className="p-4">
+              <QuickButtons onProductSelect={(product) => addToCart(product)} />
+            </Card>
           </div>
 
           {/* Right side - Cart and Payment */}
