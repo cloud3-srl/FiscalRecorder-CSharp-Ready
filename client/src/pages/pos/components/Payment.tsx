@@ -56,8 +56,7 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
       const saleData = {
         total: total.toFixed(2),
         paymentMethod,
-        discount: discountAmount.toFixed(2),
-        discountPercent: parseFloat(discountPercent),
+        timestamp: new Date(),
         items: cart.map(item => ({
           productId: item.product.id,
           quantity: item.quantity,
@@ -132,7 +131,7 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
           />
           <div className="flex justify-between text-sm text-muted-foreground">
             <span>Sconto:</span>
-            <span>€{discountAmount.toFixed(2)} ({discountPercent}%)</span>
+            <span>€{discountAmount.toFixed(2)}</span>
           </div>
         </div>
 
