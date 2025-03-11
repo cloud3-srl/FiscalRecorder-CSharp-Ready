@@ -29,22 +29,24 @@ export default function POS() {
         <div className="grid grid-cols-12 gap-4">
           {/* Left side - Products */}
           <div className="col-span-8">
-            {/* Top area for product grid */}
-            <Card className="p-4 mb-4">
-              <ProductGrid onProductSelect={(product) => addToCart(product)} />
-            </Card>
-
-            {/* Bottom area with quick buttons */}
             <Card className="p-4">
-              <QuickButtons onProductSelect={(product) => addToCart(product)} />
+              <ProductGrid onProductSelect={(product) => addToCart(product)} />
             </Card>
           </div>
 
-          {/* Right side - Cart and Payment */}
+          {/* Right side - Quick Buttons and Payment */}
           <div className="col-span-4 space-y-4">
+            {/* Quick Buttons Area */}
+            <Card className="p-4">
+              <QuickButtons onProductSelect={(product) => addToCart(product)} />
+            </Card>
+
+            {/* Cart and Payment Area */}
             <Card className="p-4">
               <Cart items={cart} setItems={setCart} />
             </Card>
+
+            {/* Payment with Numeric Keypad */}
             <Card className="p-4">
               <Payment cart={cart} onComplete={() => setCart([])} />
             </Card>
