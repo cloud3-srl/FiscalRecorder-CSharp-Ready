@@ -42,8 +42,13 @@ export default function Cart({ items, setItems }: CartProps) {
         {items.map(({ product, quantity }) => (
           <div key={product.id} className="flex items-center justify-between p-2 border rounded bg-white">
             <div>
-              <div className="font-medium">{product.name}</div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-[10px] font-medium text-muted-foreground">
+                {product.code}
+              </div>
+              <div className="text-[8px] leading-tight line-clamp-2">
+                {product.name}
+              </div>
+              <div className="text-xs text-muted-foreground mt-1">
                 €{product.price.toString()} x {quantity}
               </div>
             </div>
