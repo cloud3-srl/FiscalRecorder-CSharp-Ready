@@ -1,0 +1,30 @@
+Thanks For download Ornito - Point of Sale Sytem Dashboard
+--------
+How to edit the file:
+
+- The File Importer allows you to select local files from your Computer and import them to your File Browser.
+- You can use this to method to import:
+
+✅ Figma Files (.fig)
+
+- Click on the Import File icon next to the New File button in the toolbar. You can find this in the top-right corner of any File page in the File Browser.
+- Select the file(s) from the dialog window and click Open to start the import process.
+- Depending on the file size this can take a couple of seconds to import. Click Done to return to the File Browser.
+
+
+DRAG AND DROP
+- You can drag a file from a folder on your computer, or from your Desktop, right into Figma. This is available on both the Figma Desktop app and the Figma web app (browser-based).
+
+- You can drag and drop Files into the File Browser or the Editor. Figma supports different file formats for each approach.
+
+--------
+
+Font Information:
+
+1. Poppins
+Link download : https://fonts.google.com/specimen/Poppins?query=poppins
+
+--------
+
+
+Thanks for download :)

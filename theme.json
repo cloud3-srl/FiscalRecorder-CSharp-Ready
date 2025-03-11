@@ -1,6 +1,6 @@
 {
-  "variant": "tint",
-  "primary": "oklch(70% 0.1 230)",
+  "variant": "professional",
+  "primary": "oklch(52.62% 0.137 275.75)",
   "appearance": "light",
-  "radius": 1
+  "radius": 0.5
 }
