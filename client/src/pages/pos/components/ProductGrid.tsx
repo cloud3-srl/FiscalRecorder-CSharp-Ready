@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Product } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { Grid, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { useState } from "react";
 
 interface ProductGridProps {
@@ -21,7 +21,6 @@ export default function ProductGrid({ onProductSelect }: ProductGridProps) {
     product.code.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Prendi solo i primi 8 prodotti dalla lista filtrata
   const displayedProducts = filteredProducts?.slice(0, 8);
 
   if (isLoading) {
@@ -45,14 +44,18 @@ export default function ProductGrid({ onProductSelect }: ProductGridProps) {
           <Button
             key={product.id}
             variant="outline"
-            className="h-24 flex flex-col items-center justify-center text-center p-2"
+            className="h-16 flex flex-col items-start justify-between p-2 text-left"
             onClick={() => onProductSelect(product)}
           >
-            <Grid className="w-8 h-8 mb-1" />
-            <div className="text-sm font-medium truncate w-full">
-              {product.name}
+            <div className="w-full">
+              <div className="text-[10px] font-medium text-muted-foreground">
+                {product.code}
+              </div>
+              <div className="text-[8px] leading-tight line-clamp-2">
+                {product.name}
+              </div>
             </div>
-            <div className="text-xs text-muted-foreground">
+            <div className="text-xs font-semibold">
               €{product.price.toString()}
             </div>
           </Button>

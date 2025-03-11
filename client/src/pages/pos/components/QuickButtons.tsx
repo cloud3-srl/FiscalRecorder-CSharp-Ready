@@ -34,7 +34,7 @@ export default function QuickButtons({ onProductSelect }: QuickButtonsProps) {
     queryKey: ['/api/quick-buttons'],
   });
 
-  const filteredProducts = products?.filter(product => 
+  const filteredProducts = products?.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.code.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -124,8 +124,8 @@ export default function QuickButtons({ onProductSelect }: QuickButtonsProps) {
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
         <TabsList className="w-full">
-          <TabsTrigger 
-            value="1" 
+          <TabsTrigger
+            value="1"
             className={cn(
               "flex-1",
               selectedTab === "1" ? "bg-blue-100 hover:bg-blue-200" : ""
@@ -133,8 +133,8 @@ export default function QuickButtons({ onProductSelect }: QuickButtonsProps) {
           >
             REPARTO 1
           </TabsTrigger>
-          <TabsTrigger 
-            value="2" 
+          <TabsTrigger
+            value="2"
             className={cn(
               "flex-1",
               selectedTab === "2" ? "bg-red-100 hover:bg-red-200" : ""
@@ -160,7 +160,7 @@ export default function QuickButtons({ onProductSelect }: QuickButtonsProps) {
               key={position}
               variant="outline"
               className={cn(
-                "h-24 relative",
+                "h-16 relative flex flex-col items-start justify-between p-2 text-left",
                 selectedTab === "1" ? "hover:bg-blue-100" : selectedTab === "2" ? "hover:bg-red-100" : ""
               )}
               onClick={() => {
@@ -187,22 +187,24 @@ export default function QuickButtons({ onProductSelect }: QuickButtonsProps) {
                       }}
                       title="Rimuovi dai preferiti"
                     >
-                      <X className="h-4 w-4 text-red-500" />
+                      <X className="h-3 w-3 text-red-500" />
                     </button>
                   )}
 
-                  <div className="flex flex-col items-center justify-center text-center">
-                    <Star className="w-8 h-8 mb-1 text-yellow-500" />
-                    <div className="text-sm font-medium truncate w-full">
+                  <div className="w-full">
+                    <div className="text-[10px] font-medium text-muted-foreground">
+                      {button.product.code}
+                    </div>
+                    <div className="text-[8px] leading-tight line-clamp-2">
                       {button.product.name}
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      €{button.product.price.toString()}
-                    </div>
+                  </div>
+                  <div className="text-xs font-semibold">
+                    €{button.product.price.toString()}
                   </div>
                 </>
               ) : (
-                <Plus className="w-8 h-8 text-gray-400" />
+                <Plus className="w-4 h-4 text-gray-400" />
               )}
             </Button>
           );
