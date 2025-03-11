@@ -27,10 +27,16 @@ export default function POS() {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto p-4">
         <div className="grid grid-cols-12 gap-4">
-          {/* Left side - Products */}
-          <div className="col-span-8">
+          {/* Left side - Products and Cart */}
+          <div className="col-span-8 space-y-4">
+            {/* Products Grid */}
             <Card className="p-4">
               <ProductGrid onProductSelect={(product) => addToCart(product)} />
+            </Card>
+
+            {/* Cart Total Area */}
+            <Card className="p-4">
+              <Cart items={cart} setItems={setCart} />
             </Card>
           </div>
 
@@ -39,11 +45,6 @@ export default function POS() {
             {/* Quick Buttons Area */}
             <Card className="p-4">
               <QuickButtons onProductSelect={(product) => addToCart(product)} />
-            </Card>
-
-            {/* Cart and Payment Area */}
-            <Card className="p-4">
-              <Cart items={cart} setItems={setCart} />
             </Card>
 
             {/* Payment with Numeric Keypad */}
