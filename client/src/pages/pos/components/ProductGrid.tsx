@@ -24,10 +24,10 @@ export default function ProductGrid({ onProductSelect }: ProductGridProps) {
     queryKey: ['/api/products'],
   });
 
-  const filteredProducts = products?.filter(product => 
+  const filteredProducts = search ? products?.filter(product => 
     product.name.toLowerCase().includes(search.toLowerCase()) ||
     product.code.toLowerCase().includes(search.toLowerCase())
-  );
+  ) : [];
 
   if (isLoading) {
     return <div>Caricamento prodotti...</div>;
@@ -42,53 +42,65 @@ export default function ProductGrid({ onProductSelect }: ProductGridProps) {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="flex-1"
+          autoFocus
         />
       </div>
 
-      <div className="overflow-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[50px]">Cancella</TableHead>
-              <TableHead>Articolo #</TableHead>
-              <TableHead>Nome Elemento</TableHead>
-              <TableHead className="text-right">Costo</TableHead>
-              <TableHead className="text-right">Quantità</TableHead>
-              <TableHead>Imballo</TableHead>
-              <TableHead className="text-right">Sconto %</TableHead>
-              <TableHead className="text-right">Totale</TableHead>
-              <TableHead className="w-[70px]">Aggiorna</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredProducts?.map(product => (
-              <TableRow 
-                key={product.id}
-                className="cursor-pointer hover:bg-muted/50"
-                onClick={() => onProductSelect(product)}
-              >
-                <TableCell>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </TableCell>
-                <TableCell>{product.code}</TableCell>
-                <TableCell>{product.name}</TableCell>
-                <TableCell className="text-right">€{parseFloat(product.price).toFixed(2)}</TableCell>
-                <TableCell className="text-right">{product.inStock || 0}</TableCell>
-                <TableCell>{product.unitOfMeasure || 'Pz'}</TableCell>
-                <TableCell className="text-right">0%</TableCell>
-                <TableCell className="text-right">€{parseFloat(product.price).toFixed(2)}</TableCell>
-                <TableCell>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <RefreshCw className="h-4 w-4" />
-                  </Button>
-                </TableCell>
+      {search && filteredProducts && filteredProducts.length > 0 && (
+        <div className="overflow-auto max-h-[400px]">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[50px]">Cancella</TableHead>
+                <TableHead>Articolo #</TableHead>
+                <TableHead>Nome Elemento</TableHead>
+                <TableHead className="text-right">Costo</TableHead>
+                <TableHead className="text-right">Quantità</TableHead>
+                <TableHead>Imballo</TableHead>
+                <TableHead className="text-right">Sconto %</TableHead>
+                <TableHead className="text-right">Totale</TableHead>
+                <TableHead className="w-[70px]">Aggiorna</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {filteredProducts.map(product => (
+                <TableRow 
+                  key={product.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => {
+                    onProductSelect(product);
+                    setSearch(""); // Pulisce il campo dopo la selezione
+                  }}
+                >
+                  <TableCell>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                  <TableCell>{product.code}</TableCell>
+                  <TableCell>{product.name}</TableCell>
+                  <TableCell className="text-right">€{parseFloat(product.price).toFixed(2)}</TableCell>
+                  <TableCell className="text-right">{product.inStock || 0}</TableCell>
+                  <TableCell>{product.unitOfMeasure || 'Pz'}</TableCell>
+                  <TableCell className="text-right">0%</TableCell>
+                  <TableCell className="text-right">€{parseFloat(product.price).toFixed(2)}</TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <RefreshCw className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {search && (!filteredProducts || filteredProducts.length === 0) && (
+        <div className="text-center text-muted-foreground py-4">
+          Nessun prodotto trovato
+        </div>
+      )}
     </div>
   );
 }
