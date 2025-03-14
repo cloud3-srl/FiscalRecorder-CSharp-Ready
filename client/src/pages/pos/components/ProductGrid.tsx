@@ -74,11 +74,11 @@ export default function ProductGrid({ onProductSelect }: ProductGridProps) {
                 </TableCell>
                 <TableCell>{product.code}</TableCell>
                 <TableCell>{product.name}</TableCell>
-                <TableCell className="text-right">€{product.price.toFixed(2)}</TableCell>
-                <TableCell className="text-right">{product.stock || 0}</TableCell>
-                <TableCell>{product.unit || 'Pz'}</TableCell>
+                <TableCell className="text-right">€{parseFloat(product.price).toFixed(2)}</TableCell>
+                <TableCell className="text-right">{product.inStock || 0}</TableCell>
+                <TableCell>{product.unitOfMeasure || 'Pz'}</TableCell>
                 <TableCell className="text-right">0%</TableCell>
-                <TableCell className="text-right">€{product.price.toFixed(2)}</TableCell>
+                <TableCell className="text-right">€{parseFloat(product.price).toFixed(2)}</TableCell>
                 <TableCell>
                   <Button variant="ghost" size="icon" className="h-8 w-8">
                     <RefreshCw className="h-4 w-4" />
