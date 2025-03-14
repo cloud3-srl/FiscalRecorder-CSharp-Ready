@@ -6,7 +6,7 @@ import { queryClient } from "@/lib/queryClient";
 import { Product } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { EuroIcon, CreditCard, QrCode } from "lucide-react";
-import NewNumericKeypad from "./NewNumericKeypad";
+import NumericKeypad from "./NumericKeypad";
 
 interface PaymentProps {
   cart: Array<{product: Product, quantity: number}>;
@@ -180,7 +180,7 @@ export default function Payment({ cart, customerId, onComplete }: PaymentProps) 
           </div>
         )}
 
-        <NewNumericKeypad
+        <NumericKeypad
           value={inputFocus === 'total' ? manualTotal : cashReceived}
           onChange={handleKeypadInput}
           onDiscount={handleDiscount}
