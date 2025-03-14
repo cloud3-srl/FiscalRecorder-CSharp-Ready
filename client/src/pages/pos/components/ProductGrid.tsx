@@ -2,8 +2,16 @@ import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Product } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
+import { Search, Trash2, RefreshCw } from "lucide-react";
 import { useState } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface ProductGridProps {
   onProductSelect: (product: Product) => void;
@@ -21,8 +29,6 @@ export default function ProductGrid({ onProductSelect }: ProductGridProps) {
     product.code.toLowerCase().includes(search.toLowerCase())
   );
 
-  const displayedProducts = filteredProducts?.slice(0, 8);
-
   if (isLoading) {
     return <div>Caricamento prodotti...</div>;
   }
@@ -32,34 +38,56 @@ export default function ProductGrid({ onProductSelect }: ProductGridProps) {
       <div className="flex gap-2">
         <Search className="w-5 h-5 text-muted-foreground" />
         <Input
-          placeholder="Cerca prodotti..."
+          placeholder="Incomincia a digitare Nome Articolo o spara il Codice a Barre..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="flex-1"
         />
       </div>
 
-      <div className="grid grid-rows-2 grid-cols-4 gap-2">
-        {displayedProducts?.map(product => (
-          <Button
-            key={product.id}
-            variant="outline"
-            className="h-16 flex flex-col items-start justify-between p-2 text-left"
-            onClick={() => onProductSelect(product)}
-          >
-            <div className="w-full">
-              <div className="text-[10px] font-medium text-muted-foreground">
-                {product.code}
-              </div>
-              <div className="text-[8px] leading-tight line-clamp-2">
-                {product.name}
-              </div>
-            </div>
-            <div className="text-xs font-semibold">
-              €{product.price.toString()}
-            </div>
-          </Button>
-        ))}
+      <div className="overflow-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[50px]">Cancella</TableHead>
+              <TableHead>Articolo #</TableHead>
+              <TableHead>Nome Elemento</TableHead>
+              <TableHead className="text-right">Costo</TableHead>
+              <TableHead className="text-right">Quantità</TableHead>
+              <TableHead>Imballo</TableHead>
+              <TableHead className="text-right">Sconto %</TableHead>
+              <TableHead className="text-right">Totale</TableHead>
+              <TableHead className="w-[70px]">Aggiorna</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredProducts?.map(product => (
+              <TableRow 
+                key={product.id}
+                className="cursor-pointer hover:bg-muted/50"
+                onClick={() => onProductSelect(product)}
+              >
+                <TableCell>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </TableCell>
+                <TableCell>{product.code}</TableCell>
+                <TableCell>{product.name}</TableCell>
+                <TableCell className="text-right">€{product.price.toFixed(2)}</TableCell>
+                <TableCell className="text-right">{product.stock || 0}</TableCell>
+                <TableCell>{product.unit || 'Pz'}</TableCell>
+                <TableCell className="text-right">0%</TableCell>
+                <TableCell className="text-right">€{product.price.toFixed(2)}</TableCell>
+                <TableCell>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <RefreshCw className="h-4 w-4" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );
