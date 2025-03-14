@@ -1,6 +1,14 @@
 import { Product } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Minus, Plus, Trash2 } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface CartProps {
   items: Array<{product: Product, quantity: number}>;
@@ -23,68 +31,82 @@ export default function Cart({ items, setItems }: CartProps) {
   };
 
   const total = items.reduce(
-    (sum, item) => sum + (parseFloat(item.product.price.toString()) * item.quantity),
+    (sum, item) => sum + (parseFloat(item.product.price) * item.quantity),
     0
   );
 
   return (
     <div className="space-y-4">
-      {/* Blocco totale sempre visibile in alto */}
-      <div className="bg-green-100 p-4 rounded-lg sticky top-0">
-        <div className="text-xl font-bold text-right text-green-800">
-          Totale: €{total.toFixed(2)}
-        </div>
-      </div>
-
       <div className="text-lg font-semibold">Carrello</div>
 
-      <div className="space-y-2 max-h-[calc(100vh-400px)] overflow-y-auto">
-        {items.map(({ product, quantity }) => (
-          <div key={product.id} className="flex items-center justify-between p-2 border rounded bg-white">
-            <div>
-              <div className="text-[10px] font-medium text-muted-foreground">
-                {product.code}
-              </div>
-              <div className="text-[8px] leading-tight line-clamp-2">
-                {product.name}
-              </div>
-              <div className="text-xs text-muted-foreground mt-1">
-                €{product.price.toString()} x {quantity}
-              </div>
-            </div>
+      <div className="overflow-auto max-h-[calc(100vh-400px)]">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Codice</TableHead>
+              <TableHead>Descrizione</TableHead>
+              <TableHead className="text-right">Prezzo</TableHead>
+              <TableHead className="text-right">Qtà</TableHead>
+              <TableHead className="text-right">Subtot.</TableHead>
+              <TableHead className="w-[100px]">Azioni</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {items.map(({ product, quantity }) => (
+              <TableRow key={product.id}>
+                <TableCell className="font-mono">{product.code}</TableCell>
+                <TableCell className="max-w-[200px] truncate">
+                  {product.name}
+                </TableCell>
+                <TableCell className="text-right">
+                  €{parseFloat(product.price).toFixed(2)}
+                </TableCell>
+                <TableCell>
+                  <div className="flex items-center justify-end gap-2">
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      className="h-6 w-6"
+                      onClick={() => updateQuantity(product.id, -1)}
+                    >
+                      <Minus className="h-3 w-3" />
+                    </Button>
+                    <span className="w-8 text-center">{quantity}</span>
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      className="h-6 w-6"
+                      onClick={() => updateQuantity(product.id, 1)}
+                    >
+                      <Plus className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </TableCell>
+                <TableCell className="text-right">
+                  €{(parseFloat(product.price) * quantity).toFixed(2)}
+                </TableCell>
+                <TableCell>
+                  <Button
+                    size="icon"
+                    variant="destructive"
+                    className="h-6 w-6"
+                    onClick={() => removeItem(product.id)}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
-            <div className="flex items-center gap-2">
-              <Button
-                size="icon"
-                variant="outline"
-                onClick={() => updateQuantity(product.id, -1)}
-                title="Diminuisci quantità"
-              >
-                <Minus className="h-4 w-4" />
-              </Button>
-
-              <span className="w-8 text-center">{quantity}</span>
-
-              <Button
-                size="icon"
-                variant="outline"
-                onClick={() => updateQuantity(product.id, 1)}
-                title="Aumenta quantità"
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-
-              <Button
-                size="icon"
-                variant="destructive"
-                onClick={() => removeItem(product.id)}
-                title="Rimuovi prodotto"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        ))}
+      {/* Totale */}
+      <div className="border-t pt-4">
+        <div className="flex justify-between text-lg font-bold">
+          <span>Totale</span>
+          <span>€{total.toFixed(2)}</span>
+        </div>
       </div>
     </div>
   );
