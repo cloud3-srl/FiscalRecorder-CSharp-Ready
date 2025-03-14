@@ -7,8 +7,6 @@ import { Product } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { EuroIcon, CreditCard, QrCode } from "lucide-react";
 import NumericKeypad from "./NumericKeypad";
-import { useOfflineSync } from "@/hooks/use-offline";
-import { savePendingSale } from "@/lib/indexedDB";
 
 interface PaymentProps {
   cart: Array<{product: Product, quantity: number}>;
@@ -25,10 +23,9 @@ export default function Payment({ cart, customerId, onComplete }: PaymentProps) 
   const [manualTotal, setManualTotal] = useState<string>("");
   const [inputFocus, setInputFocus] = useState<InputFocus>('total');
   const { toast } = useToast();
-  const { isOnline } = useOfflineSync();
 
   const subtotal = cart.reduce(
-    (sum, item) => sum + (parseFloat(item.product.price.toString()) * item.quantity),
+    (sum, item) => sum + (parseFloat(item.product.price) * item.quantity),
     0
   );
 
@@ -67,14 +64,9 @@ export default function Payment({ cart, customerId, onComplete }: PaymentProps) 
         items: cart.map(item => ({
           productId: item.product.id,
           quantity: item.quantity,
-          price: parseFloat(item.product.price.toString()).toFixed(2)
+          price: parseFloat(item.product.price).toFixed(2)
         }))
       };
-
-      if (!isOnline) {
-        await savePendingSale(saleData, saleData.items);
-        return { message: "Vendita salvata offline" };
-      }
 
       const response = await fetch('/api/sales', {
         method: 'POST',
@@ -91,10 +83,8 @@ export default function Payment({ cart, customerId, onComplete }: PaymentProps) 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/sales'] });
       toast({
-        title: isOnline ? "Vendita completata" : "Vendita salvata offline",
-        description: isOnline 
-          ? "Stampa dello scontrino in corso"
-          : "La vendita verrà sincronizzata quando la connessione sarà ripristinata"
+        title: "Vendita completata",
+        description: "Stampa dello scontrino in corso"
       });
       onComplete();
       setCashReceived("");
@@ -113,9 +103,7 @@ export default function Payment({ cart, customerId, onComplete }: PaymentProps) 
 
   return (
     <div className="space-y-4">
-      <div className="text-lg font-semibold">
-        Pagamento {!isOnline && "(Modalità Offline)"}
-      </div>
+      <div className="text-lg font-semibold">Pagamento</div>
 
       <div className="space-y-2">
         <div className="flex justify-between">
@@ -209,7 +197,7 @@ export default function Payment({ cart, customerId, onComplete }: PaymentProps) 
         }
         onClick={() => completeSale()}
       >
-        {isOnline ? "Completa Vendita" : "Salva Vendita Offline"}
+        {isPending ? "Elaborazione..." : "Completa Vendita"}
       </Button>
     </div>
   );
