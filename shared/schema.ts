@@ -26,7 +26,11 @@ export const sales = pgTable("sales", {
   timestamp: timestamp("timestamp").defaultNow().notNull(),
   total: numeric("total", { precision: 10, scale: 2 }).notNull(),
   paymentMethod: varchar("payment_method", { length: 20 }).notNull(),
-  receiptNumber: varchar("receipt_number", { length: 50 }).notNull()
+  receiptNumber: varchar("receipt_number", { length: 50 }).notNull(),
+  customerId: integer("customer_id"),
+  status: varchar("status", { length: 20 }).default("completed").notNull(),
+  notes: text("notes"),
+  returnedSaleId: integer("returned_sale_id")
 });
 
 export const saleItems = pgTable("sale_items", {
@@ -46,7 +50,6 @@ export const quickButtons = pgTable("quick_buttons", {
   active: boolean("active").default(true)
 });
 
-// Nuova tabella per le configurazioni del database esterno
 export const databaseConfigs = pgTable("database_configs", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 50 }).notNull(),
@@ -61,7 +64,6 @@ export const databaseConfigs = pgTable("database_configs", {
   createdAt: timestamp("created_at").defaultNow().notNull()
 });
 
-// Nuova tabella per le configurazioni dell'applicazione
 export const appConfigs = pgTable("app_configs", {
   id: serial("id").primaryKey(),
   key: varchar("key", { length: 50 }).notNull().unique(),
@@ -70,7 +72,6 @@ export const appConfigs = pgTable("app_configs", {
   updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
 
-// Nuova tabella per le configurazioni della stampante
 export const printerConfigs = pgTable("printer_configs", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 100 }).notNull(),
@@ -84,11 +85,26 @@ export const printerConfigs = pgTable("printer_configs", {
   headerText: text("header_text"),
   footerText: text("footer_text"),
   logoEnabled: boolean("logo_enabled").default(false),
-  logoImage: text("logo_image"), // Campo per salvare il logo in base64
-  logoWidth: integer("logo_width").default(120), // Larghezza massima del logo in mm
-  logoHeight: integer("logo_height").default(40), // Altezza massima del logo in mm
+  logoImage: text("logo_image"),
+  logoWidth: integer("logo_width").default(120),
+  logoHeight: integer("logo_height").default(40),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+export const customers = pgTable("customers", {
+  id: serial("id").primaryKey(),
+  code: varchar("code", { length: 50 }).notNull().unique(),
+  name: varchar("name", { length: 255 }).notNull(),
+  fiscalCode: varchar("fiscal_code", { length: 16 }),
+  vatNumber: varchar("vat_number", { length: 20 }),
+  address: text("address"),
+  city: varchar("city", { length: 100 }),
+  email: varchar("email", { length: 255 }),
+  phone: varchar("phone", { length: 50 }),
+  notes: text("notes"),
+  points: integer("points").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull()
 });
 
 export const insertProductSchema = createInsertSchema(products).omit({ id: true });
@@ -97,12 +113,8 @@ export const insertSaleItemSchema = createInsertSchema(saleItems).omit({ id: tru
 export const insertQuickButtonSchema = createInsertSchema(quickButtons).omit({ id: true });
 export const insertDatabaseConfigSchema = createInsertSchema(databaseConfigs).omit({ id: true, lastSync: true, createdAt: true });
 export const insertAppConfigSchema = createInsertSchema(appConfigs).omit({ id: true, updatedAt: true });
-// Aggiungi i tipi e gli schema
-export const insertPrinterConfigSchema = createInsertSchema(printerConfigs).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true
-});
+export const insertPrinterConfigSchema = createInsertSchema(printerConfigs).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertCustomerSchema = createInsertSchema(customers).omit({ id: true, createdAt: true });
 
 export type Product = typeof products.$inferSelect;
 export type Sale = typeof sales.$inferSelect;
@@ -118,3 +130,5 @@ export type InsertDatabaseConfig = z.infer<typeof insertDatabaseConfigSchema>;
 export type InsertAppConfig = z.infer<typeof insertAppConfigSchema>;
 export type PrinterConfig = typeof printerConfigs.$inferSelect;
 export type InsertPrinterConfig = z.infer<typeof insertPrinterConfigSchema>;
+export type Customer = typeof customers.$inferSelect;
+export type InsertCustomer = z.infer<typeof insertCustomerSchema>;

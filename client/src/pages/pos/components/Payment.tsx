@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,13 +12,14 @@ import { savePendingSale } from "@/lib/indexedDB";
 
 interface PaymentProps {
   cart: Array<{product: Product, quantity: number}>;
+  customerId: number | null;
   onComplete: () => void;
 }
 
 type PaymentMethod = 'contanti' | 'carte' | 'satispay';
 type InputFocus = 'total' | 'cash';
 
-export default function Payment({ cart, onComplete }: PaymentProps) {
+export default function Payment({ cart, customerId, onComplete }: PaymentProps) {
   const [cashReceived, setCashReceived] = useState<string>("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('contanti');
   const [manualTotal, setManualTotal] = useState<string>("");
@@ -61,6 +62,7 @@ export default function Payment({ cart, onComplete }: PaymentProps) {
       const saleData = {
         total: total.toFixed(2),
         paymentMethod,
+        customerId,
         timestamp: new Date(),
         items: cart.map(item => ({
           productId: item.product.id,
