@@ -99,7 +99,7 @@ export default function POS() {
           </div>
 
           {/* Right Column - Actions, Cart, Keypad (1/3) */}
-          <div className="col-span-4 space-y-4 flex flex-col">
+          <div className="col-span-4 space-y-2 flex flex-col"> {/* Modificato space-y-4 a space-y-2 */}
             <Card className="p-2 shadow-sm border border-gray-100 rounded-lg">
               <div className="flex justify-around items-center">
                 <Button variant="ghost" size="icon" title="Svuota Carrello" onClick={() => setCart([])}>
