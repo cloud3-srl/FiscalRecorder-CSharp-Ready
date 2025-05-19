@@ -1,66 +1,48 @@
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 interface NewNumericKeypadProps {
-  value: string;
-  onChange: (value: string) => void;
-  onDiscount?: (amount: number) => void;
+  onKeyPress: (key: string) => void;
+  // onDiscount?: (amount: number) => void; // Rimosso per ora, può essere aggiunto se necessario
 }
 
-export default function NewNumericKeypad({ value, onChange, onDiscount }: NewNumericKeypadProps) {
-  const buttons = [
-    '7', '8', '9',
-    '4', '5', '6',
-    '1', '2', '3',
-    '0', '00', 'CE'
+export default function NewNumericKeypad({ onKeyPress }: NewNumericKeypadProps) {
+  // Layout dei tasti come da screenshot fornito (quello sotto il carrello)
+  const layout = [
+    { key: 'C', className: "bg-slate-200 hover:bg-slate-300 text-slate-800" }, // Tasto C (Clear?)
+    { key: 'PAGA', className: "col-span-1 bg-green-500 hover:bg-green-600 text-white" },
+    { key: 'RESO', className: "bg-amber-500 hover:bg-amber-600 text-white" },
+    { key: 'SUB', className: "bg-sky-500 hover:bg-sky-600 text-white" },
+    
+    { key: '7', className: "" }, { key: '8', className: "" }, { key: '9', className: "" },
+    { key: 'x', label: '×', className: "bg-slate-200 hover:bg-slate-300 text-slate-800" }, // Moltiplicazione
+    
+    { key: '4', className: "" }, { key: '5', className: "" }, { key: '6', className: "" },
+    { key: '-', className: "bg-slate-200 hover:bg-slate-300 text-slate-800" }, // Sottrazione
+    
+    { key: '1', className: "" }, { key: '2', className: "" }, { key: '3', className: "" },
+    { key: '%-', className: "bg-sky-500 hover:bg-sky-600 text-white" }, // Sconto percentuale
+    
+    { key: '0', className: "" }, { key: '00', className: "" }, { key: '.', className: "" },
+    { key: '%+', className: "bg-sky-500 hover:bg-sky-600 text-white" }, // Aumento percentuale / Maggiorazione
+    
+    // Il tasto TOT non è visibile nello screenshot del tastierino, ma era nel layout precedente.
+    // Lo aggiungo qui, potrebbe essere un col-span-4 o rimosso se non serve.
+    // Per ora lo ometto per seguire strettamente lo screenshot del tastierino.
+    // { key: 'TOT', className: "col-span-4 bg-blue-500 hover:bg-blue-600 text-white" },
   ];
 
-  const handleClick = (button: string) => {
-    if (button === 'CE') {
-      onChange('');
-    } else if (button === '00') {
-      if (value === '') return;
-      onChange(value + '00');
-    } else {
-      onChange(value + button);
-    }
-  };
-
   return (
-    <div className="space-y-2">
-      <Input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="text-right text-2xl"
-        placeholder="0.00"
-      />
-
-      {/* Numeric Keypad Grid */}
-      <div className="grid grid-cols-4 gap-1">
-        {/* Prima riga di bottoni speciali */}
-        <Button variant="outline" className="h-12" onClick={() => onChange('')}>Pick List</Button>
-        <Button variant="outline" className="h-12">Open Drawer</Button>
-        <Button variant="outline" className="h-12">CE</Button>
-        <Button variant="outline" className="h-12">C</Button>
-
-        {/* Griglia numerica 3x4 */}
-        {buttons.map((button) => (
-          <Button
-            key={button}
-            variant={button === 'CE' ? "destructive" : "default"}
-            onClick={() => handleClick(button)}
-            className="h-12 text-xl"
-          >
-            {button}
-          </Button>
-        ))}
-
-        {/* Bottoni azioni speciali */}
-        <Button variant="outline" className="h-12">Qty</Button>
-        <Button variant="default" className="h-12 bg-blue-600 hover:bg-blue-700">Show Total</Button>
-        <Button variant="default" className="h-12 bg-green-600 hover:bg-green-700 col-span-2">Payment</Button>
-      </div>
+    <div className="grid grid-cols-4 gap-1">
+      {layout.map((btn) => (
+        <Button
+          key={btn.key}
+          variant="default" // Default per i numeri, sovrascritto da className per gli altri
+          className={`h-14 text-xl ${btn.className || 'bg-gray-700 hover:bg-gray-800 text-white'} ${btn.key === 'PAGA' ? 'col-span-1' : ''}`}
+          onClick={() => onKeyPress(btn.key)}
+        >
+          {btn.label || btn.key}
+        </Button>
+      ))}
     </div>
   );
 }

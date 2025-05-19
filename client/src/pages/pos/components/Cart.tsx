@@ -36,36 +36,37 @@ export default function Cart({ items, setItems }: CartProps) {
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 flex flex-col h-full">
       <div className="flex items-center mb-4 text-blue-600">
         <ShoppingCart className="h-5 w-5 mr-2" />
         <div className="text-lg font-semibold">Carrello</div>
       </div>
 
-      <div className="overflow-auto max-h-[calc(100vh-400px)]">
+      <div className="overflow-auto flex-grow"> {/* Modificato per flex-grow */}
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
-              <TableHead className="text-xs font-semibold text-gray-600">Codice</TableHead>
               <TableHead className="text-xs font-semibold text-gray-600">Descrizione</TableHead>
+              <TableHead className="text-xs font-semibold text-gray-600 text-center w-[100px]">Qtà</TableHead>
               <TableHead className="text-xs font-semibold text-gray-600 text-right">Prezzo</TableHead>
-              <TableHead className="text-xs font-semibold text-gray-600 text-right">Qtà</TableHead>
-              <TableHead className="text-xs font-semibold text-gray-600 text-right">Subtot.</TableHead>
-              <TableHead className="text-xs font-semibold text-gray-600 w-[100px]">Azioni</TableHead>
+              <TableHead className="text-xs font-semibold text-gray-600 text-right w-[40px]">Azioni</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
+            {items.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center text-muted-foreground py-4">
+                  Il carrello è vuoto.
+                </TableCell>
+              </TableRow>
+            )}
             {items.map(({ product, quantity }) => (
               <TableRow key={product.id} className="hover:bg-blue-50 transition-colors">
-                <TableCell className="font-mono text-sm">{product.code}</TableCell>
-                <TableCell className="max-w-[200px] truncate text-sm">
+                <TableCell className="max-w-[150px] truncate text-sm">
                   {product.name}
                 </TableCell>
-                <TableCell className="text-right text-sm">
-                  €{parseFloat(product.price).toFixed(2)}
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center justify-end gap-2">
+                <TableCell className="text-center">
+                  <div className="flex items-center justify-center gap-1">
                     <Button
                       size="icon"
                       variant="outline"
@@ -85,14 +86,14 @@ export default function Cart({ items, setItems }: CartProps) {
                     </Button>
                   </div>
                 </TableCell>
-                <TableCell className="text-right font-medium">
-                  €{(parseFloat(product.price) * quantity).toFixed(2)}
+                <TableCell className="text-right text-sm font-medium">
+                  €{parseFloat(product.price).toFixed(2)}
                 </TableCell>
-                <TableCell>
+                <TableCell className="text-right">
                   <Button
                     size="icon"
-                    variant="outline"
-                    className="h-6 w-6 bg-red-50 hover:bg-red-100 border-red-100 text-red-500"
+                    variant="ghost"
+                    className="h-6 w-6 text-red-500 hover:bg-red-100"
                     onClick={() => removeItem(product.id)}
                   >
                     <Trash2 className="h-3 w-3" />
@@ -105,7 +106,7 @@ export default function Cart({ items, setItems }: CartProps) {
       </div>
 
       {/* Totale */}
-      <div className="border-t pt-4 mt-2">
+      <div className="border-t pt-4 mt-auto"> {/* Modificato per mt-auto per spingere in basso */}
         <div className="flex justify-between text-lg font-bold">
           <span className="text-gray-700">Totale</span>
           <span className="text-blue-600">€{total.toFixed(2)}</span>
