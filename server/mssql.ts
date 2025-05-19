@@ -132,8 +132,8 @@ export async function importProductsFromC3EXPPOS(config: DatabaseConfig, codiceA
     // Trasforma i dati nel formato richiesto dall'applicazione
     const products = result.rows.map((row: any) => ({
       code: row.EACODART.trim(),
-      name: row.EACODART.trim(), // Usa il codice articolo come nome se non c'è un campo specifico
-      description: '',
+      name: row.EADESART?.trim() || row.EACODART.trim(), // Usa EADESART come nome, se disponibile
+      description: row.EADESART?.trim() || '',
       price: row.EAPREZZO,
       listCode: row.EACODLIS?.trim(),
       activationDate: row.EA__DATA,
