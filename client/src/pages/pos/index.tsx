@@ -125,8 +125,7 @@ export default function POS() {
             </Card>
             
             <Card className="p-2 shadow-sm border border-gray-100 rounded-lg">
-              {/* Placeholder per il display del tastierino */}
-              <div className="text-right text-2xl font-mono p-2 mb-2 border-b h-12 flex items-center justify-end">{displayValue}</div>
+              {/* Display rimosso */}
               <NewNumericKeypad onKeyPress={handleNumericKeyPress} />
             </Card>
           </div>
