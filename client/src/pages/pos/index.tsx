@@ -8,20 +8,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // Nuova importazione
 import ProductGrid from "./components/ProductGrid";
-import QuickButtons from "./components/QuickButtons";
+import QuickButtons from "./components/QuickButtons"; // Potrebbe essere rimosso o modificato
 import Cart from "./components/Cart";
 import Payment from "./components/Payment";
 import CustomerSelect from "./components/CustomerSelect";
 import { Product } from "@shared/schema";
-import { Calendar, Store, Pause, ShoppingCart, CreditCard, Users } from "lucide-react";
+import { Calendar, Store, Pause, ShoppingCart, CreditCard, Users } from "lucide-react"; // Store non è usato
+
+const categoryTabs = [
+  { value: "preferiti", label: "Preferiti" },
+  { value: "reparti", label: "Reparti" },
+  { value: "cat1", label: "Categoria Pers. 1" },
+  { value: "cat2", label: "Categoria Pers. 2" },
+  { value: "cat3", label: "Categoria Pers. 3" },
+  { value: "cat4", label: "Categoria Pers. 4" },
+];
 
 export default function POS() {
   const [cart, setCart] = useState<Array<{product: Product, quantity: number}>>([]);
   const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
   const [registrationMode, setRegistrationMode] = useState<string>("SCONTRINO DI VENDITA");
   const [table, setTable] = useState<string>("");
-  const [activeTab, setActiveTab] = useState<string>("products"); // Nuovo stato per gestire le tab
+  // const [activeTab, setActiveTab] = useState<string>("products"); // Rimosso, useremo activeCategoryTab
+  const [activeCategoryTab, setActiveCategoryTab] = useState<string>(categoryTabs[0].value);
+  const [searchTerm, setSearchTerm] = useState<string>(""); // Per gestire la ricerca da ProductGrid
 
   const addToCart = (product: Product, quantity: number = 1) => {
     const existingItem = cart.find(item => item.product.id === product.id);
@@ -94,58 +106,61 @@ export default function POS() {
       {/* Main Content - Stile WowDash */}
       <div className="container mx-auto p-4">
         {/* Tabs di navigazione in stile WowDash */}
-        <div className="flex mb-4 bg-white rounded-lg shadow-sm p-1 border">
-          <Button 
-            variant="ghost" 
-            className={`flex-1 rounded-md ${activeTab === 'products' ? 'bg-blue-50 text-blue-600' : ''}`}
-            onClick={() => setActiveTab('products')}
-          >
-            <ShoppingCart className="h-4 w-4 mr-2" />
-            Prodotti
-          </Button>
-          <Button 
-            variant="ghost" 
-            className={`flex-1 rounded-md ${activeTab === 'customers' ? 'bg-blue-50 text-blue-600' : ''}`}
-            onClick={() => setActiveTab('customers')}
-          >
-            <Users className="h-4 w-4 mr-2" />
-            Clienti
-          </Button>
-          <Button 
-            variant="ghost" 
-            className={`flex-1 rounded-md ${activeTab === 'payment' ? 'bg-blue-50 text-blue-600' : ''}`}
-            onClick={() => setActiveTab('payment')}
-          >
-            <CreditCard className="h-4 w-4 mr-2" />
-            Pagamento
-          </Button>
-        </div>
+        {/* Rimosse le tab di navigazione principali (Prodotti, Clienti, Pagamento) da qui, 
+            saranno integrate diversamente o gestite dalla sidebar principale dell'app */}
 
         <div className="grid grid-cols-12 gap-4">
-          {/* Left Column - Products and Cart */}
-          <div className="col-span-5 space-y-4">
+          {/* Left Column - Customer Select and Cart */}
+          {/* Modificato da col-span-5 a col-span-4 (o 3, da decidere) */}
+          <div className="col-span-4 space-y-4">
             <Card className="p-4 shadow-sm border border-gray-100 rounded-lg overflow-hidden">
-              <div className="mb-4">
-                <CustomerSelect
-                  selectedCustomerId={selectedCustomerId}
-                  onSelect={setSelectedCustomerId}
-                />
-              </div>
-              <ProductGrid onProductSelect={(product) => addToCart(product)} />
+              <CustomerSelect
+                selectedCustomerId={selectedCustomerId}
+                onSelect={setSelectedCustomerId}
+              />
             </Card>
             <Card className="p-4 shadow-sm border border-gray-100 rounded-lg overflow-hidden">
               <Cart items={cart} setItems={setCart} />
             </Card>
           </div>
 
-          {/* Center Column - Quick Buttons */}
-          <div className="col-span-4">
+          {/* Center Column - Search, Category Tabs, and Product Display Area */}
+          {/* Modificato da col-span-4 a col-span-5 (o 6) */}
+          <div className="col-span-5">
             <Card className="p-4 shadow-sm border border-gray-100 rounded-lg overflow-hidden h-full">
-              <QuickButtons onProductSelect={(product) => addToCart(product)} />
+              <ProductGrid 
+                onProductSelect={(product) => addToCart(product)} 
+                onSearchChange={setSearchTerm} // Passa la callback per aggiornare lo stato di ricerca
+              />
+              
+              {/* Mostra le tab solo se non c'è una ricerca attiva */}
+              {!searchTerm && (
+                <Tabs value={activeCategoryTab} onValueChange={setActiveCategoryTab} className="mt-4">
+                  <TabsList className="grid w-full grid-cols-3 md:grid-cols-6">
+                    {categoryTabs.map(tab => (
+                      <TabsTrigger key={tab.value} value={tab.value}>{tab.label}</TabsTrigger>
+                    ))}
+                  </TabsList>
+                  {categoryTabs.map(tab => (
+                    <TabsContent key={tab.value} value={tab.value}>
+                      {tab.value === "preferiti" ? (
+                        <QuickButtons onProductSelect={(product) => addToCart(product)} />
+                      ) : (
+                        <div className="py-4 text-center text-muted-foreground h-full flex items-center justify-center">
+                          Contenuto per {tab.label} non ancora implementato.
+                        </div>
+                      )}
+                    </TabsContent>
+                  ))}
+                </Tabs>
+              )}
+              {/* Se searchTerm è attivo, ProductGrid gestirà la visualizzazione dei risultati o "Nessun prodotto trovato".
+                  Non è necessario un ulteriore placeholder qui per il caso di ricerca. */}
             </Card>
           </div>
 
           {/* Right Column - Payment */}
+          {/* Modificato da col-span-3 a col-span-3 (o 4) */}
           <div className="col-span-3 space-y-4">
             <Card className="p-4 shadow-sm border border-gray-100 rounded-lg overflow-hidden">
               <Payment 

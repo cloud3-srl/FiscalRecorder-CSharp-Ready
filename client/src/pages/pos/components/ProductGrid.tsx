@@ -15,9 +15,10 @@ import {
 
 interface ProductGridProps {
   onProductSelect: (product: Product) => void;
+  onSearchChange: (searchTerm: string) => void; // Nuova prop
 }
 
-export default function ProductGrid({ onProductSelect }: ProductGridProps) {
+export default function ProductGrid({ onProductSelect, onSearchChange }: ProductGridProps) {
   const [search, setSearch] = useState("");
 
   const { data: products, isLoading } = useQuery<Product[]>({
@@ -40,7 +41,10 @@ export default function ProductGrid({ onProductSelect }: ProductGridProps) {
         <Input
           placeholder="Incomincia a digitare Nome Articolo o spara il Codice a Barre..."
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            onSearchChange(e.target.value); // Notifica il cambiamento
+          }}
           className="flex-1"
           autoFocus
         />
@@ -51,15 +55,15 @@ export default function ProductGrid({ onProductSelect }: ProductGridProps) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[50px]">Cancella</TableHead>
+                {/* <TableHead className="w-[50px]">Cancella</TableHead> -- Rimosso come da screenshot POS */}
                 <TableHead>Articolo #</TableHead>
                 <TableHead>Nome Elemento</TableHead>
                 <TableHead className="text-right">Costo</TableHead>
                 <TableHead className="text-right">Quantità</TableHead>
-                <TableHead>Imballo</TableHead>
-                <TableHead className="text-right">Sconto %</TableHead>
-                <TableHead className="text-right">Totale</TableHead>
-                <TableHead className="w-[70px]">Aggiorna</TableHead>
+                {/* <TableHead>Imballo</TableHead> -- Rimosso come da screenshot POS */}
+                {/* <TableHead className="text-right">Sconto %</TableHead> -- Rimosso come da screenshot POS */}
+                {/* <TableHead className="text-right">Totale</TableHead> -- Rimosso come da screenshot POS */}
+                {/* <TableHead className="w-[70px]">Aggiorna</TableHead> -- Rimosso come da screenshot POS */}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -69,26 +73,23 @@ export default function ProductGrid({ onProductSelect }: ProductGridProps) {
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => {
                     onProductSelect(product);
-                    setSearch(""); // Pulisce il campo dopo la selezione
+                    setSearch(""); 
+                    onSearchChange(""); // Notifica che la ricerca è terminata
                   }}
                 >
-                  <TableCell>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
                   <TableCell>{product.code}</TableCell>
                   <TableCell>{product.name}</TableCell>
                   <TableCell className="text-right">€{parseFloat(product.price).toFixed(2)}</TableCell>
                   <TableCell className="text-right">{product.inStock || 0}</TableCell>
-                  <TableCell>{product.unitOfMeasure || 'Pz'}</TableCell>
-                  <TableCell className="text-right">0%</TableCell>
-                  <TableCell className="text-right">€{parseFloat(product.price).toFixed(2)}</TableCell>
+                  {/* Le colonne aggiuntive sono state commentate/rimosse per corrispondere allo screenshot, 
+                      ma se servono possono essere ripristinate. 
+                      Ad esempio, per l'icona "Cancella" o "Aggiorna" si potrebbe aggiungere:
                   <TableCell>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <RefreshCw className="h-4 w-4" />
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => { e.stopPropagation(); console.log('delete', product.id);}}>
+                      <Trash2 className="h-4 w-4" />
                     </Button>
-                  </TableCell>
+                  </TableCell> 
+                  */}
                 </TableRow>
               ))}
             </TableBody>
