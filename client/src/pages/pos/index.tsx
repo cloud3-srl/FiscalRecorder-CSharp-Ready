@@ -63,11 +63,11 @@ export default function POS() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 pt-2 pb-4"> {/* Ridotto padding superiore */}
+      <div className="container mx-auto px-4 pb-4"> {/* Rimosso pt-2 */}
         <div className="grid grid-cols-12 gap-4">
           {/* Left Column - Search, Category Tabs, and Product Display Area (2/3) */}
           <div className="col-span-8">
-            <Card className="p-4 shadow-sm border border-gray-100 rounded-lg overflow-hidden h-full flex flex-col">
+            <Card className="px-2 py-3 shadow-sm border border-gray-100 rounded-lg overflow-hidden h-full flex flex-col"> {/* Modificato padding p-4 a px-2 py-3 */}
               <ProductGrid 
                 onProductSelect={(product) => addToCart(product)} 
                 onSearchChange={setSearchTerm}
