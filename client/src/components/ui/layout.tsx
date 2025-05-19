@@ -7,17 +7,13 @@ interface LayoutProps {
 }
 
 export function Layout({ children, className }: LayoutProps) {
+  // Semplificato per essere un wrapper di base, dato che AppNavigation ora gestisce la struttura principale.
   return (
     <div className={cn(
-      "min-h-screen bg-background",
-      "font-sans antialiased",
+      "min-h-screen bg-background font-sans antialiased",
       className
     )}>
-      <main className="flex min-h-screen flex-col">
-        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-          {children}
-        </div>
-      </main>
+      {children}
     </div>
   );
 }
