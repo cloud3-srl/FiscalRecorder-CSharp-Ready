@@ -63,7 +63,7 @@ export default function POS() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto p-4">
+      <div className="container mx-auto px-4 pt-2 pb-4"> {/* Ridotto padding superiore */}
         <div className="grid grid-cols-12 gap-4">
           {/* Left Column - Search, Category Tabs, and Product Display Area (2/3) */}
           <div className="col-span-8">

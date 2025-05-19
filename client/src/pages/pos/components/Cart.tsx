@@ -36,13 +36,10 @@ export default function Cart({ items, setItems }: CartProps) {
   );
 
   return (
-    <div className="space-y-4 flex flex-col h-full">
-      <div className="flex items-center mb-4 text-blue-600">
-        <ShoppingCart className="h-5 w-5 mr-2" />
-        <div className="text-lg font-semibold">Carrello</div>
-      </div>
+    <div className="flex flex-col h-full"> {/* Rimosso space-y-4, gestito da flex-grow e mt-auto per il totale */}
+      {/* Intestazione Carrello rimossa */}
 
-      <div className="overflow-auto flex-grow"> {/* Modificato per flex-grow */}
+      <div className="overflow-auto flex-grow">
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
