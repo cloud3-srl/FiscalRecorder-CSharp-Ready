@@ -63,29 +63,31 @@ export default function POS() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 pb-4"> {/* Rimosso pt-2 */}
-        <div className="grid grid-cols-12 gap-4">
+      <div className="container mx-auto px-4"> {/* Rimosso padding verticale pb-4 */}
+        <div className="grid grid-cols-12 gap-4 mt-0"> {/* Aggiunto mt-0 per rimuovere spazio sopra la griglia se presente */}
           {/* Left Column - Search, Category Tabs, and Product Display Area (2/3) */}
           <div className="col-span-8">
-            <Card className="px-2 py-3 shadow-sm border border-gray-100 rounded-lg overflow-hidden h-full flex flex-col"> {/* Modificato padding p-4 a px-2 py-3 */}
+            {/* Rimosso padding verticale dalla Card, aggiunto pb-2 per un minimo spazio sotto */}
+            <Card className="px-2 shadow-sm border border-gray-100 rounded-lg overflow-hidden h-full flex flex-col pb-2"> 
               <ProductGrid 
                 onProductSelect={(product) => addToCart(product)} 
                 onSearchChange={setSearchTerm}
               />
               
               {!searchTerm && (
-                <Tabs value={activeCategoryTab} onValueChange={setActiveCategoryTab} className="mt-4 flex-grow flex flex-col">
+                <Tabs value={activeCategoryTab} onValueChange={setActiveCategoryTab} className="mt-2 flex-grow flex flex-col"> {/* Ridotto mt-4 a mt-2 */}
                   <TabsList className="grid w-full grid-cols-3 md:grid-cols-6">
                     {categoryTabs.map(tab => (
                       <TabsTrigger key={tab.value} value={tab.value}>{tab.label}</TabsTrigger>
                     ))}
                   </TabsList>
                   {categoryTabs.map(tab => (
-                    <TabsContent key={tab.value} value={tab.value} className="flex-grow">
+                    // Aggiunto overflow-y-auto a TabsContent e rimosso h-full dal div interno
+                    <TabsContent key={tab.value} value={tab.value} className="flex-grow overflow-y-auto pt-2"> 
                       {tab.value === "preferiti" ? (
                         <QuickButtons onProductSelect={(product) => addToCart(product)} />
                       ) : (
-                        <div className="py-4 text-center text-muted-foreground h-full flex items-center justify-center">
+                        <div className="py-4 text-center text-muted-foreground flex items-center justify-center">
                           Contenuto per {tab.label} non ancora implementato.
                         </div>
                       )}
