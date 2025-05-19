@@ -1,6 +1,6 @@
 import { Product } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingCart } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -37,28 +37,31 @@ export default function Cart({ items, setItems }: CartProps) {
 
   return (
     <div className="space-y-4">
-      <div className="text-lg font-semibold">Carrello</div>
+      <div className="flex items-center mb-4 text-blue-600">
+        <ShoppingCart className="h-5 w-5 mr-2" />
+        <div className="text-lg font-semibold">Carrello</div>
+      </div>
 
       <div className="overflow-auto max-h-[calc(100vh-400px)]">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>Codice</TableHead>
-              <TableHead>Descrizione</TableHead>
-              <TableHead className="text-right">Prezzo</TableHead>
-              <TableHead className="text-right">Qtà</TableHead>
-              <TableHead className="text-right">Subtot.</TableHead>
-              <TableHead className="w-[100px]">Azioni</TableHead>
+            <TableRow className="bg-gray-50">
+              <TableHead className="text-xs font-semibold text-gray-600">Codice</TableHead>
+              <TableHead className="text-xs font-semibold text-gray-600">Descrizione</TableHead>
+              <TableHead className="text-xs font-semibold text-gray-600 text-right">Prezzo</TableHead>
+              <TableHead className="text-xs font-semibold text-gray-600 text-right">Qtà</TableHead>
+              <TableHead className="text-xs font-semibold text-gray-600 text-right">Subtot.</TableHead>
+              <TableHead className="text-xs font-semibold text-gray-600 w-[100px]">Azioni</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {items.map(({ product, quantity }) => (
-              <TableRow key={product.id}>
-                <TableCell className="font-mono">{product.code}</TableCell>
-                <TableCell className="max-w-[200px] truncate">
+              <TableRow key={product.id} className="hover:bg-blue-50 transition-colors">
+                <TableCell className="font-mono text-sm">{product.code}</TableCell>
+                <TableCell className="max-w-[200px] truncate text-sm">
                   {product.name}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right text-sm">
                   €{parseFloat(product.price).toFixed(2)}
                 </TableCell>
                 <TableCell>
@@ -66,30 +69,30 @@ export default function Cart({ items, setItems }: CartProps) {
                     <Button
                       size="icon"
                       variant="outline"
-                      className="h-6 w-6"
+                      className="h-6 w-6 bg-gray-50 hover:bg-gray-100 border-gray-200"
                       onClick={() => updateQuantity(product.id, -1)}
                     >
-                      <Minus className="h-3 w-3" />
+                      <Minus className="h-3 w-3 text-gray-600" />
                     </Button>
-                    <span className="w-8 text-center">{quantity}</span>
+                    <span className="w-8 text-center font-medium">{quantity}</span>
                     <Button
                       size="icon"
                       variant="outline"
-                      className="h-6 w-6"
+                      className="h-6 w-6 bg-gray-50 hover:bg-gray-100 border-gray-200"
                       onClick={() => updateQuantity(product.id, 1)}
                     >
-                      <Plus className="h-3 w-3" />
+                      <Plus className="h-3 w-3 text-gray-600" />
                     </Button>
                   </div>
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right font-medium">
                   €{(parseFloat(product.price) * quantity).toFixed(2)}
                 </TableCell>
                 <TableCell>
                   <Button
                     size="icon"
-                    variant="destructive"
-                    className="h-6 w-6"
+                    variant="outline"
+                    className="h-6 w-6 bg-red-50 hover:bg-red-100 border-red-100 text-red-500"
                     onClick={() => removeItem(product.id)}
                   >
                     <Trash2 className="h-3 w-3" />
@@ -102,10 +105,10 @@ export default function Cart({ items, setItems }: CartProps) {
       </div>
 
       {/* Totale */}
-      <div className="border-t pt-4">
+      <div className="border-t pt-4 mt-2">
         <div className="flex justify-between text-lg font-bold">
-          <span>Totale</span>
-          <span>€{total.toFixed(2)}</span>
+          <span className="text-gray-700">Totale</span>
+          <span className="text-blue-600">€{total.toFixed(2)}</span>
         </div>
       </div>
     </div>

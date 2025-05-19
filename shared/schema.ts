@@ -107,6 +107,45 @@ export const customers = pgTable("customers", {
   createdAt: timestamp("created_at").defaultNow().notNull()
 });
 
+// Nuova tabella per i log di connessione al database
+export const dbConnectionLogs = pgTable("db_connection_logs", {
+  id: serial("id").primaryKey(),
+  configId: integer("config_id").notNull(),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  status: varchar("status", { length: 20 }).notNull(), // 'success', 'error'
+  message: text("message"),
+  details: jsonb("details").default({}),
+  duration: integer("duration") // in millisecondi
+});
+
+// Nuova tabella per le operazioni pianificate
+export const scheduledOperations = pgTable("scheduled_operations", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 100 }).notNull(),
+  type: varchar("type", { length: 50 }).notNull(), // 'import', 'export', 'sync'
+  configId: integer("config_id").notNull(),
+  schedule: varchar("schedule", { length: 100 }).notNull(), // formato cron
+  lastRun: timestamp("last_run"),
+  nextRun: timestamp("next_run"),
+  status: varchar("status", { length: 20 }).default("pending").notNull(), // 'pending', 'running', 'completed', 'failed'
+  options: jsonb("options").default({}),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+// Nuova tabella per i risultati delle query SQL
+export const sqlQueryHistory = pgTable("sql_query_history", {
+  id: serial("id").primaryKey(),
+  configId: integer("config_id").notNull(),
+  query: text("query").notNull(),
+  timestamp: timestamp("timestamp").defaultNow().notNull(),
+  duration: integer("duration"), // in millisecondi
+  status: varchar("status", { length: 20 }).notNull(), // 'success', 'error'
+  message: text("message"),
+  rowsAffected: integer("rows_affected"),
+  userId: integer("user_id") // per future implementazioni di autenticazione
+});
+
 export const insertProductSchema = createInsertSchema(products).omit({ id: true });
 export const insertSaleSchema = createInsertSchema(sales).omit({ id: true, timestamp: true });
 export const insertSaleItemSchema = createInsertSchema(saleItems).omit({ id: true });
@@ -115,6 +154,11 @@ export const insertDatabaseConfigSchema = createInsertSchema(databaseConfigs).om
 export const insertAppConfigSchema = createInsertSchema(appConfigs).omit({ id: true, updatedAt: true });
 export const insertPrinterConfigSchema = createInsertSchema(printerConfigs).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertCustomerSchema = createInsertSchema(customers).omit({ id: true, createdAt: true });
+
+// Nuovi schemi per le nuove tabelle
+export const insertDbConnectionLogSchema = createInsertSchema(dbConnectionLogs).omit({ id: true, timestamp: true });
+export const insertScheduledOperationSchema = createInsertSchema(scheduledOperations).omit({ id: true, lastRun: true, nextRun: true, createdAt: true, updatedAt: true });
+export const insertSqlQueryHistorySchema = createInsertSchema(sqlQueryHistory).omit({ id: true, timestamp: true });
 
 export type Product = typeof products.$inferSelect;
 export type Sale = typeof sales.$inferSelect;
@@ -132,3 +176,30 @@ export type PrinterConfig = typeof printerConfigs.$inferSelect;
 export type InsertPrinterConfig = z.infer<typeof insertPrinterConfigSchema>;
 export type Customer = typeof customers.$inferSelect;
 export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
+
+// Nuovi tipi per le nuove tabelle
+export type DbConnectionLog = typeof dbConnectionLogs.$inferSelect;
+export type InsertDbConnectionLog = z.infer<typeof insertDbConnectionLogSchema>;
+export type ScheduledOperation = typeof scheduledOperations.$inferSelect;
+export type InsertScheduledOperation = z.infer<typeof insertScheduledOperationSchema>;
+export type SqlQueryHistory = typeof sqlQueryHistory.$inferSelect;
+export type InsertSqlQueryHistory = z.infer<typeof insertSqlQueryHistorySchema>;
+
+// Schema per l'esecuzione di query SQL
+export const sqlQuerySchema = z.object({
+  configId: z.number(),
+  query: z.string().min(1),
+  parameters: z.array(z.any()).optional()
+});
+
+// Schema per la pianificazione di operazioni
+export const scheduleOperationSchema = z.object({
+  name: z.string().min(1),
+  type: z.enum(['import', 'export', 'sync']),
+  configId: z.number(),
+  schedule: z.string().min(1), // formato cron
+  options: z.record(z.any()).optional()
+});
+
+export type SqlQuery = z.infer<typeof sqlQuerySchema>;
+export type ScheduleOperation = z.infer<typeof scheduleOperationSchema>;

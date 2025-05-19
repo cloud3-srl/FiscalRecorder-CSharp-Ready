@@ -1,16 +1,18 @@
 import type { Express } from "express";
 import { createServer } from "http";
 import { storage } from "./storage";
-import { insertProductSchema, insertQuickButtonSchema, insertDatabaseConfigSchema, insertPrinterConfigSchema } from "@shared/schema";
+import { insertProductSchema, insertQuickButtonSchema, insertDatabaseConfigSchema, insertPrinterConfigSchema, sqlQuerySchema, scheduleOperationSchema, insertDbConnectionLogSchema, insertScheduledOperationSchema } from "@shared/schema";
 import { z } from "zod";
-import { eq, sql } from 'drizzle-orm';
+import { eq, sql, desc } from 'drizzle-orm';
 import { db } from "./db";
-import { products, quickButtons, databaseConfigs, printerConfigs } from "@shared/schema";
+import * as schema from "@shared/schema";
+import { products, quickButtons, databaseConfigs, printerConfigs, dbConnectionLogs, scheduledOperations, sqlQueryHistory } from "@shared/schema";
 import multer from "multer";
 import { parse } from "csv-parse";
 import { Readable } from "stream";
 import { exec } from "child_process";
 import { promisify } from "util";
+import { testMssqlConnection, executeMssqlQuery, queryC3EXPPOS, importProductsFromC3EXPPOS } from "./mssql";
 
 const execAsync = promisify(exec);
 
@@ -175,11 +177,44 @@ export async function registerRoutes(app: Express) {
     }
 
     try {
-      // TODO: Implementare il test della connessione MSSQL
-      // Per ora restituiamo sempre successo
-      res.json({ success: true });
+      const startTime = Date.now();
+      
+      // Test della connessione MSSQL
+      const success = await testMssqlConnection(req.body);
+      const message = "Connessione stabilita con successo";
+      
+      const endTime = Date.now();
+      const duration = endTime - startTime;
+      
+      // Registra il log di connessione
+      try {
+        await db.insert(dbConnectionLogs).values({
+          configId: req.body.id || 0, // 0 per configurazioni non ancora salvate
+          status: success ? 'success' : 'error',
+          message,
+          duration,
+          details: { config: req.body }
+        });
+      } catch (logError) {
+        console.error('Errore nel salvataggio del log:', logError);
+      }
+      
+      res.json({ success, message });
     } catch (error) {
       console.error('Errore nel test della connessione:', error);
+      
+      // Registra il log di errore
+      try {
+        await db.insert(dbConnectionLogs).values({
+          configId: req.body.id || 0,
+          status: 'error',
+          message: error instanceof Error ? error.message : 'Errore sconosciuto',
+          details: { error: String(error), config: req.body }
+        });
+      } catch (logError) {
+        console.error('Errore nel salvataggio del log:', logError);
+      }
+      
       res.status(500).json({ error: "Impossibile testare la connessione" });
     }
   });
@@ -478,6 +513,296 @@ export async function registerRoutes(app: Express) {
     } catch (error) {
       console.error('Errore nel recupero delle stampanti:', error);
       res.status(500).json({ error: "Impossibile recuperare le stampanti" });
+    }
+  });
+
+  // Nuove route per l'esecuzione di query SQL
+  app.post("/api/admin/execute-query", async (req, res) => {
+    const result = sqlQuerySchema.safeParse(req.body);
+    if (!result.success) {
+      res.status(400).json({ error: result.error });
+      return;
+    }
+
+    try {
+      // Ottieni la configurazione del database attiva
+      const [activeConfig] = await db
+        .select()
+        .from(databaseConfigs)
+        .where(eq(databaseConfigs.isActive, true))
+        .limit(1);
+
+      if (!activeConfig) {
+        return res.status(400).json({ 
+          success: false,
+          error: "Nessuna configurazione di database attiva"
+        });
+      }
+
+      const startTime = Date.now();
+      
+      // Esegui la query sul database MSSQL
+      const queryResult = await executeMssqlQuery(
+        activeConfig, 
+        result.data.query, 
+        result.data.parameters || []
+      );
+      
+      const endTime = Date.now();
+      const duration = endTime - startTime;
+      
+      // Registra la query nella cronologia
+      await db.insert(sqlQueryHistory).values({
+        configId: result.data.configId,
+        query: result.data.query,
+        duration,
+        status: 'success',
+        message: 'Query eseguita con successo',
+        rowsAffected: queryResult.rowCount
+      });
+      
+      res.json({
+        success: true,
+        result: queryResult,
+        duration
+      });
+    } catch (error) {
+      console.error('Errore nell\'esecuzione della query:', error);
+      
+      // Registra l'errore nella cronologia
+      try {
+        await db.insert(sqlQueryHistory).values({
+          configId: result.data.configId,
+          query: result.data.query,
+          status: 'error',
+          message: error instanceof Error ? error.message : 'Errore sconosciuto',
+          rowsAffected: 0
+        });
+      } catch (logError) {
+        console.error('Errore nel salvataggio della cronologia:', logError);
+      }
+      
+      res.status(500).json({ 
+        success: false,
+        error: "Errore nell'esecuzione della query",
+        message: error instanceof Error ? error.message : 'Errore sconosciuto'
+      });
+    }
+  });
+
+  // Route per ottenere la cronologia delle query
+  app.get("/api/admin/query-history", async (req, res) => {
+    try {
+      const history = await db
+        .select()
+        .from(sqlQueryHistory)
+        .orderBy(desc(sqlQueryHistory.timestamp))
+        .limit(100);
+
+      res.json(history);
+    } catch (error) {
+      console.error('Errore nel recupero della cronologia delle query:', error);
+      res.status(500).json({ error: "Impossibile recuperare la cronologia" });
+    }
+  });
+
+  // Nuova route per interrogare la tabella C3EXPPOS
+  app.get("/api/c3exppos", async (req, res) => {
+    try {
+      // Ottieni la configurazione del database attiva
+      const [activeConfig] = await db
+        .select()
+        .from(databaseConfigs)
+        .where(eq(databaseConfigs.isActive, true))
+        .limit(1);
+
+      if (!activeConfig) {
+        return res.status(400).json({ 
+          success: false,
+          error: "Nessuna configurazione di database attiva"
+        });
+      }
+
+      // Ottieni il codice azienda dalla query string o usa il default 'SCARL'
+      const codiceAzienda = req.query.codiceAzienda as string || 'SCARL';
+      
+      // Esegui la query sulla tabella C3EXPPOS
+      const result = await queryC3EXPPOS(activeConfig, codiceAzienda);
+      
+      res.json({
+        success: true,
+        result
+      });
+    } catch (error) {
+      console.error('Errore nell\'interrogazione della tabella C3EXPPOS:', error);
+      res.status(500).json({ 
+        success: false,
+        error: "Errore nell'interrogazione della tabella C3EXPPOS",
+        message: error instanceof Error ? error.message : 'Errore sconosciuto'
+      });
+    }
+  });
+
+  // Nuova route per importare i prodotti dalla tabella C3EXPPOS
+  app.post("/api/import-products-from-c3exppos", async (req, res) => {
+    try {
+      // Ottieni la configurazione del database attiva
+      const [activeConfig] = await db
+        .select()
+        .from(databaseConfigs)
+        .where(eq(databaseConfigs.isActive, true))
+        .limit(1);
+
+      if (!activeConfig) {
+        return res.status(400).json({ 
+          success: false,
+          error: "Nessuna configurazione di database attiva"
+        });
+      }
+
+      // Ottieni il codice azienda dalla query string o usa il default 'SCARL'
+      const codiceAzienda = req.body.codiceAzienda || 'SCARL';
+      
+      // Importa i prodotti dalla tabella C3EXPPOS
+      const products = await importProductsFromC3EXPPOS(activeConfig, codiceAzienda);
+      
+      // Salva i prodotti nel database interno
+      const importedProducts = [];
+      const errors = [];
+      
+      for (const product of products) {
+        try {
+          const existingProduct = await db
+            .select()
+            .from(schema.products)
+            .where(eq(schema.products.code, product.code))
+            .limit(1)
+            .then(res => res[0]);
+          
+          if (existingProduct) {
+            // Aggiorna il prodotto esistente
+            const [updatedProduct] = await db
+              .update(schema.products)
+              .set(product)
+              .where(eq(schema.products.code, product.code))
+              .returning();
+            
+            importedProducts.push(updatedProduct);
+          } else {
+            // Crea un nuovo prodotto
+            const [newProduct] = await db
+              .insert(schema.products)
+              .values(product)
+              .returning();
+            
+            importedProducts.push(newProduct);
+          }
+        } catch (err) {
+          console.error(`Errore nell'importazione del prodotto ${product.code}:`, err);
+          errors.push({
+            code: product.code,
+            error: err instanceof Error ? err.message : 'Errore sconosciuto'
+          });
+        }
+      }
+      
+      res.json({
+        success: true,
+        imported: importedProducts.length,
+        total: products.length,
+        errors: errors.length > 0 ? errors : undefined
+      });
+    } catch (error) {
+      console.error('Errore nell\'importazione dei prodotti da C3EXPPOS:', error);
+      res.status(500).json({ 
+        success: false,
+        error: "Errore nell'importazione dei prodotti da C3EXPPOS",
+        message: error instanceof Error ? error.message : 'Errore sconosciuto'
+      });
+    }
+  });
+
+  // Route per ottenere i log di connessione
+  app.get("/api/admin/connection-logs", async (req, res) => {
+    try {
+      const logs = await db
+        .select()
+        .from(dbConnectionLogs)
+        .orderBy(desc(dbConnectionLogs.timestamp))
+        .limit(100);
+
+      res.json(logs);
+    } catch (error) {
+      console.error('Errore nel recupero dei log di connessione:', error);
+      res.status(500).json({ error: "Impossibile recuperare i log" });
+    }
+  });
+
+  // Route per le operazioni pianificate
+  app.post("/api/admin/scheduled-operations", async (req, res) => {
+    const result = scheduleOperationSchema.safeParse(req.body);
+    if (!result.success) {
+      res.status(400).json({ error: result.error });
+      return;
+    }
+
+    try {
+      // Calcola la prossima esecuzione in base alla pianificazione cron
+      // Per semplicità, impostiamo la prossima esecuzione a domani
+      const nextRun = new Date();
+      nextRun.setDate(nextRun.getDate() + 1);
+      nextRun.setHours(0, 0, 0, 0);
+      
+      const [operation] = await db
+        .insert(scheduledOperations)
+        .values({
+          name: result.data.name,
+          type: result.data.type,
+          configId: result.data.configId,
+          schedule: result.data.schedule,
+          nextRun,
+          options: result.data.options || {},
+          status: 'pending'
+        })
+        .returning();
+
+      res.json(operation);
+    } catch (error) {
+      console.error('Errore nella creazione dell\'operazione pianificata:', error);
+      res.status(500).json({ error: "Impossibile creare l'operazione pianificata" });
+    }
+  });
+
+  app.get("/api/admin/scheduled-operations", async (_req, res) => {
+    try {
+      const operations = await db
+        .select()
+        .from(scheduledOperations)
+        .orderBy(scheduledOperations.nextRun);
+
+      res.json(operations);
+    } catch (error) {
+      console.error('Errore nel recupero delle operazioni pianificate:', error);
+      res.status(500).json({ error: "Impossibile recuperare le operazioni pianificate" });
+    }
+  });
+
+  app.delete("/api/admin/scheduled-operations/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      res.status(400).json({ error: "Invalid ID" });
+      return;
+    }
+
+    try {
+      await db
+        .delete(scheduledOperations)
+        .where(eq(scheduledOperations.id, id));
+
+      res.status(204).end();
+    } catch (error) {
+      console.error('Errore nell\'eliminazione dell\'operazione pianificata:', error);
+      res.status(500).json({ error: "Impossibile eliminare l'operazione pianificata" });
     }
   });
 
