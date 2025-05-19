@@ -81,8 +81,8 @@ export default function POS() {
       {/* Main Content */}
       <div className="container mx-auto p-4">
         <div className="grid grid-cols-12 gap-4">
-          {/* Left Column - Products */}
-          <div className="col-span-5">
+          {/* Left Column - Products and Cart */}
+          <div className="col-span-5 space-y-4"> {/* Aggiunto space-y-4 per separare le card */}
             <Card className="p-4">
               <div className="mb-4">
                 <CustomerSelect
@@ -92,20 +92,20 @@ export default function POS() {
               </div>
               <ProductGrid onProductSelect={(product) => addToCart(product)} />
             </Card>
-          </div>
-
-          {/* Center Column - Cart */}
-          <div className="col-span-4">
-            <Card className="p-4">
+            <Card className="p-4"> {/* Nuova Card per il Carrello */}
               <Cart items={cart} setItems={setCart} />
             </Card>
           </div>
 
-          {/* Right Column - Payment and Quick Buttons */}
-          <div className="col-span-3 space-y-4">
+          {/* Center Column - Quick Buttons */}
+          <div className="col-span-4">
             <Card className="p-4">
               <QuickButtons onProductSelect={(product) => addToCart(product)} />
             </Card>
+          </div>
+
+          {/* Right Column - Payment */}
+          <div className="col-span-3 space-y-4"> {/* space-y-4 potrebbe non essere necessario se c'è solo una card */}
             <Card className="p-4">
               <Payment 
                 cart={cart} 

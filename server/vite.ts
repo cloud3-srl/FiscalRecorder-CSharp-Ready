@@ -23,10 +23,10 @@ export function log(message: string, source = "express") {
 }
 
 export async function setupVite(app: Express, server: Server) {
-  const serverOptions = {
+  const serverOptions: import('vite').ServerOptions = { // Aggiunto tipo esplicito
     middlewareMode: true,
     hmr: { server },
-    allowedHosts: true,
+    allowedHosts: true, 
   };
 
   const vite = await createViteServer({
@@ -45,10 +45,11 @@ export async function setupVite(app: Express, server: Server) {
 
   app.use(vite.middlewares);
   app.use("*", async (req, res, next) => {
-    const url = req.originalUrl;
+    // const url = req.originalUrl === '/' ? '/index.html' : req.originalUrl; // Modifica precedente
+    const originalUrl = req.originalUrl;
 
     try {
-      const clientTemplate = path.resolve(
+      const clientTemplatePath = path.resolve( // Rinominato per chiarezza
         __dirname,
         "..",
         "client",
@@ -56,12 +57,13 @@ export async function setupVite(app: Express, server: Server) {
       );
 
       // always reload the index.html file from disk incase it changes
-      let template = await fs.promises.readFile(clientTemplate, "utf-8");
-      template = template.replace(
-        `src="/src/main.tsx"`,
-        `src="/src/main.tsx?v=${nanoid()}"`,
-      );
-      const page = await vite.transformIndexHtml(url, template);
+      let template = await fs.promises.readFile(clientTemplatePath, "utf-8");
+      // template = template.replace(
+      //   `src="/src/main.tsx"`,
+      //   `src="/src/main.tsx?v=${nanoid()}"`,
+      // ); // Commentato per testare la risoluzione dell'errore 403
+      const transformUrl = originalUrl === '/' ? '/index.html' : originalUrl;
+      const page = await vite.transformIndexHtml(transformUrl, template);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);
