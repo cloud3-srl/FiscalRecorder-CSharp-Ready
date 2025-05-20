@@ -38,7 +38,8 @@ async function fetchLocalCustomers(): Promise<{ success: boolean; customers?: sc
     if (contentType && contentType.indexOf("application/json") !== -1) {
       return response.json();
     } else {
-      throw new Error("Risposta API non valida (Content-Type non JSON).");
+      console.error("Content-Type non JSON ricevuto:", contentType); // Log aggiuntivo
+      throw new Error(`Risposta API non valida (Content-Type: ${contentType || 'non specificato'}).`);
     }
   } catch (networkError) { // Cattura errori di fetch (es. server non raggiungibile)
     console.error("Errore di rete nel recupero dei clienti locali:", networkError);
