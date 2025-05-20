@@ -77,22 +77,32 @@ export default function POS() {
               />
               
               {!searchTerm && (
-                <Tabs value={activeCategoryTab} onValueChange={setActiveCategoryTab} className="mt-2 flex-grow flex flex-col"> {/* Ridotto mt-4 a mt-2 */}
-                  <TabsList className="grid w-full grid-cols-3 md:grid-cols-6">
+                <Tabs value={activeCategoryTab} onValueChange={setActiveCategoryTab} className="mt-2 flex-grow flex flex-col overflow-hidden"> {/* Aggiunto overflow-hidden a Tabs */}
+                  <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 shrink-0"> {/* Aggiunto shrink-0 a TabsList */}
                     {categoryTabs.map(tab => (
                       <TabsTrigger key={tab.value} value={tab.value}>{tab.label}</TabsTrigger>
                     ))}
                   </TabsList>
                   {categoryTabs.map(tab => (
-                    // Aggiunto overflow-y-auto a TabsContent e rimosso h-full dal div interno
-                    <TabsContent key={tab.value} value={tab.value} className="flex-grow overflow-y-auto pt-2"> 
-                      {tab.value === "preferiti" ? (
-                        <QuickButtons onProductSelect={(product) => addToCart(product)} />
-                      ) : (
-                        <div className="py-4 text-center text-muted-foreground flex items-center justify-center">
-                          Contenuto per {tab.label} non ancora implementato.
+                    <TabsContent 
+                      key={tab.value} 
+                      value={tab.value} 
+                      className="flex-grow flex flex-col overflow-hidden pt-2" // Modificato per flex container
+                    >
+                      <div className="flex-grow overflow-y-auto p-1"> {/* Area scrollabile per prodotti filtrati */}
+                        <div className="py-4 text-center text-muted-foreground flex items-center justify-center border-2 border-dashed border-gray-300 min-h-[150px]">
+                          IN QUESTA AREA APPARTENETE DEVONO COMPARIRE I PRODOTTI FILTRATI PER L'APPARTENENZA ALLA SCHEDA PERSONALIZZATA SELEZIONATA
+                          {/* Esempio di prodotto come da screenshot */}
+                          {/* <div className="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded w-full text-left">Philip Morris</div> */}
+                        </div>
+                      </div>
+                      {/* Tasti personalizzabili / QuickButtons fissi in basso per la tab "preferiti" */}
+                      {tab.value === "preferiti" && (
+                        <div className="pt-2 border-t mt-1 shrink-0"> {/* Aggiunto shrink-0 */}
+                          <QuickButtons onProductSelect={(product) => addToCart(product)} />
                         </div>
                       )}
+                       {/* Per le altre tab, se non hanno una sezione fissa in basso, questo div non ci sarà */}
                     </TabsContent>
                   ))}
                 </Tabs>
