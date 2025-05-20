@@ -90,11 +90,8 @@ export default function POS() {
                       className="flex-grow flex flex-col overflow-hidden pt-2" // Modificato per flex container
                     >
                       <div className="flex-grow overflow-y-auto p-1"> {/* Area scrollabile per prodotti filtrati */}
-                        <div className="py-4 text-center text-muted-foreground flex items-center justify-center border-2 border-dashed border-gray-300 min-h-[150px]">
-                          IN QUESTA AREA APPARTENETE DEVONO COMPARIRE I PRODOTTI FILTRATI PER L'APPARTENENZA ALLA SCHEDA PERSONALIZZATA SELEZIONATA
-                          {/* Esempio di prodotto come da screenshot */}
-                          {/* <div className="mt-2 p-2 bg-yellow-100 border border-yellow-300 rounded w-full text-left">Philip Morris</div> */}
-                        </div>
+                        {/* Testo placeholder rimosso. Quest'area mostrerà i prodotti o sarà vuota. */}
+                        {/* Si potrebbe aggiungere un messaggio "Nessun prodotto in questa categoria" se l'array dei prodotti è vuoto */}
                       </div>
                       {/* Tasti personalizzabili / QuickButtons fissi in basso per la tab "preferiti" */}
                       {tab.value === "preferiti" && (

@@ -31,7 +31,7 @@ const navItems = [
   { href: "/customers", label: "Clienti", icon: Users },
   { href: "/deferred-invoices", label: "Fattura differita", icon: FileClock },
   { href: "/fidelity", label: "Fidelity", icon: Star },
-  { href: "/ts-wallet", label: "TS Wallet", icon: Wallet },
+  // { href: "/ts-wallet", label: "TS Wallet", icon: Wallet }, // Rimosso come da screenshot
   { href: "/settings", label: "Impostazioni", icon: Settings }, // Icona aggiornata
   { href: "/help-center", label: "Centro assistenza", icon: HelpCircle },
   { href: "/news", label: "News e Comunicazioni", icon: Megaphone },
