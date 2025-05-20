@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useState, useEffect } from "react";
-import { AlertCircle, CheckCircle2, RefreshCw, Play, Settings2, ListChecks, Users } from "lucide-react"; // Aggiunto Users
+import { useQueryClient } from "@tanstack/react-query"; // Importa useQueryClient
+import { AlertCircle, CheckCircle2, RefreshCw, Play, Settings2, ListChecks, Users } from "lucide-react"; 
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
@@ -29,6 +30,7 @@ const initialSyncStatus: SyncStatus = {
 export default function DbSyncPage() {
   const [productsSyncStatus, setProductsSyncStatus] = useState<SyncStatus>(initialSyncStatus);
   const [customersSyncStatus, setCustomersSyncStatus] = useState<SyncStatus>(initialSyncStatus);
+  const queryClient = useQueryClient(); // Inizializza queryClient
 
   // TODO: Funzioni per recuperare lo stato attuale della sync dal backend (es. da databaseConfigs)
   // TODO: Funzioni per pianificare la sync
@@ -86,8 +88,9 @@ export default function DbSyncPage() {
             error: null 
           }));
           console.log("Risultato sync clienti:", result);
-          // Richiama fetchSyncStatus per aggiornare dalla sorgente di verità (DB)
-          fetchSyncStatus(); 
+          // Invalida la query delle configurazioni DB per forzare il refetch di lastSync
+          queryClient.invalidateQueries({ queryKey: ['databaseConfigs'] }); 
+          fetchSyncStatus(); // Richiama per aggiornare la UI immediatamente se possibile
         } else {
           setStatus(prev => ({ 
             ...prev, 

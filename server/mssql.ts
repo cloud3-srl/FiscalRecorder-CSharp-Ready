@@ -296,9 +296,13 @@ export async function importExternalCustomersToLocalDb(mssqlConfig: DatabaseConf
     }
     // Per ora, manteniamo updatedCount = externalCustomers.length come indicazione dei record processati.
     // importedCount rimane 0.
+    // Rinominiamo per chiarezza: processedCount invece di updatedCount se non distinguiamo.
+    const processedCount = externalCustomers.length;
 
-    console.log(`Importazione/aggiornamento clienti completata. Tentativi di upsert per ${externalCustomers.length} clienti.`);
-    return { success: true, importedCount: 0, updatedCount: externalCustomers.length }; // Restituisce 0 per importedCount per ora
+    console.log(`Importazione/aggiornamento clienti completata. Tentativi di upsert per ${processedCount} clienti.`);
+    // Restituiamo processedCount come updatedCount, e importedCount come 0, come prima.
+    // Il frontend può mostrare "Processati: X"
+    return { success: true, importedCount: 0, updatedCount: processedCount }; 
 
   } catch (error) {
     console.error('Errore generale durante l\'importazione dei clienti esterni nel DB locale:', error);
