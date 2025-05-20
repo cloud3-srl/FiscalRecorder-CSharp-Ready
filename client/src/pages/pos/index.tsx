@@ -63,16 +63,17 @@ export default function POS() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Top Bar - Rimossa come da istruzioni precedenti, ma il div contenitore rimane per ora */}
-      <div className="bg-white shadow-sm border-b p-3">
-        <div className="container mx-auto flex justify-end items-center h-10">
-          {/* Questo spazio era per i pulsanti globali, ora vuoto */}
-        </div>
-      </div>
+    // Rimuovo min-h-screen bg-gray-50 dal wrapper esterno, sarà gestito dal layout principale
+    // e dal container interno se necessario.
+    // Il padding p-4 md:p-8 pt-6 è già in App.tsx <main>
+    // Quindi il container qui non ha bisogno di px-4 e può usare h-full.
+    <div className="h-full flex flex-col"> {/* Modificato per occupare lo spazio del genitore <main> */}
+      {/* Top Bar rimossa */}
 
-      <div className="container mx-auto px-4 flex flex-col h-[calc(100vh-theme(spacing.20))]">
-        <div className="grid grid-cols-12 gap-4 mt-0 flex-grow">
+      {/* Il container principale della pagina POS ora occupa h-full del suo genitore <main> */}
+      {/* Rimuovo container mx-auto px-4 perché il padding è già gestito da <main> in App.tsx */}
+      <div className="flex flex-col h-full">
+        <div className="grid grid-cols-12 gap-4 mt-0 flex-grow h-full"> {/* Aggiunto h-full qui */}
           <div className="col-span-8 h-full"> {/* Left Column */}
             <Card className="px-2 shadow-sm border border-gray-100 rounded-lg overflow-hidden h-full flex flex-col pb-2"> 
               <ProductGrid 
