@@ -12,7 +12,8 @@ import { parse } from "csv-parse";
 import { Readable } from "stream";
 import { exec } from "child_process";
 import { promisify } from "util";
-import { testMssqlConnection, executeMssqlQuery, queryC3EXPPOS, importProductsFromC3EXPPOS } from "./mssql";
+import { testMssqlConnection, executeMssqlQuery, queryC3EXPPOS, importProductsFromC3EXPPOS, getCustomers } from "./mssql"; // Aggiunto getCustomers
+import { ExternalCustomer } from "@shared/schema"; // Aggiunto ExternalCustomer
 
 const execAsync = promisify(exec);
 
@@ -803,6 +804,43 @@ export async function registerRoutes(app: Express) {
     } catch (error) {
       console.error('Errore nell\'eliminazione dell\'operazione pianificata:', error);
       res.status(500).json({ error: "Impossibile eliminare l'operazione pianificata" });
+    }
+  });
+
+  // Nuova rotta per recuperare i clienti
+  app.get("/api/customers", async (req, res) => {
+    try {
+      const [activeConfig] = await db
+        .select()
+        .from(databaseConfigs)
+        .where(eq(databaseConfigs.isActive, true))
+        .limit(1);
+
+      if (!activeConfig) {
+        return res.status(400).json({ 
+          success: false,
+          error: "Nessuna configurazione di database attiva"
+        });
+      }
+      
+      // Il codice azienda potrebbe essere passato come query param o preso da una configurazione
+      // Per ora, usiamo 'SCARL' come specificato.
+      const companyCode = (req.query.companyCode as string) || 'SCARL'; 
+      
+      const customersList: ExternalCustomer[] = await getCustomers(activeConfig, companyCode);
+      
+      res.json({
+        success: true,
+        customers: customersList
+      });
+
+    } catch (error) {
+      console.error('Errore nel recupero dei clienti:', error);
+      res.status(500).json({ 
+        success: false,
+        error: "Impossibile recuperare i clienti",
+        message: error instanceof Error ? error.message : 'Errore sconosciuto'
+      });
     }
   });
 

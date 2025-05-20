@@ -10,6 +10,7 @@ import POS from "@/pages/pos";
 import AdminPage from "@/pages/admin";
 import DatabaseConfigPage from "@/pages/admin/database";
 import ReportPage from "@/pages/report";
+import CustomersPage from "@/pages/customers"; // Nuova importazione
 import NotFound from "@/pages/not-found";
 import { 
   Home, Settings, Database, FileText, Menu, Briefcase, Users, FileClock, Star, Wallet, HelpCircle, Megaphone, BarChart3, FileArchive, Building2 
@@ -43,6 +44,7 @@ const routes = [
   { path: "/admin", component: AdminPage, label: "Admin", icon: Settings },
   { path: "/admin/database", component: DatabaseConfigPage, label: "Database Config", icon: Database },
   { path: "/reports", component: ReportPage, label: "Report", icon: BarChart3 }, // Aggiornato per matchare navItems
+  { path: "/customers", component: CustomersPage, label: "Clienti", icon: Users }, // Nuova route
   // Aggiungere qui le altre route per le nuove pagine del menu laterale quando verranno create
   // Esempio: { path: "/documents", component: DocumentsPage, label: "Documenti", icon: FileArchive },
 ];

@@ -28,6 +28,51 @@ export async function createMssqlConnection(config: DatabaseConfig): Promise<mss
   }
 }
 
+// Funzione per recuperare i clienti dalla tabella specifica (es. SCARLCONTI)
+export async function getCustomers(config: DatabaseConfig, companyCode: string): Promise<any[]> { // Dovrebbe restituire Promise<ExternalCustomer[]>
+  // Correggi la password se necessario
+  if (config.username === 'sa' && config.password === '!Nuvola3') {
+    config = { ...config, password: 'Nuvola3' };
+    console.log('Password corretta per l\'utente sa durante getCustomers');
+  }
+
+  const tableName = `${companyCode}CONTI`;
+  // Seleziona solo i campi di interesse e applica il filtro
+  const query = `
+    SELECT 
+      ANCODICE, ANDESCRI, ANPARIVA, ANCODFIS, ANCODEST, 
+      ANINDIRI, ANLOCALI, ANPROVIN, ANNAZION, ANCODPAG 
+    FROM ${tableName} 
+    WHERE ANTIPCON = 'C'
+  `;
+
+  try {
+    const result = await executeMssqlQuery(config, query);
+    
+    // Trasforma i dati nel formato ExternalCustomer
+    // Nota: i nomi dei campi nel DB MSSQL potrebbero non essere case-sensitive o potrebbero tornare in maiuscolo.
+    // Assicurati che il mapping corrisponda a come vengono restituiti da executeMssqlQuery.
+    // executeMssqlQuery restituisce le chiavi così come sono nel recordset.
+    const customers = result.rows.map((row: any) => ({
+      ANCODICE: row.ANCODICE?.trim(),
+      ANDESCRI: row.ANDESCRI?.trim(),
+      ANPARIVA: row.ANPARIVA?.trim(),
+      ANCODFIS: row.ANCODFIS?.trim(),
+      ANCODEST: row.ANCODEST?.trim(), // Corretto da ANCODDES
+      ANINDIRI: row.ANINDIRI?.trim(),
+      ANLOCALI: row.ANLOCALI?.trim(),
+      ANPROVIN: row.ANPROVIN?.trim(),
+      ANNAZION: row.ANNAZION?.trim(),
+      ANCODPAG: row.ANCODPAG?.trim(),
+    }));
+    
+    return customers;
+  } catch (err) {
+    console.error(`Errore nel recuperare i clienti da ${tableName}:`, err);
+    throw err; // Rilancia l'errore per essere gestito dal chiamante (es. la rotta API)
+  }
+}
+
 // Funzione per eseguire una query sul database MSSQL
 export async function executeMssqlQuery(config: DatabaseConfig, query: string, params: any[] = []): Promise<any> {
   let pool: mssql.ConnectionPool | null = null;

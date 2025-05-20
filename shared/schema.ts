@@ -203,3 +203,18 @@ export const scheduleOperationSchema = z.object({
 
 export type SqlQuery = z.infer<typeof sqlQuerySchema>;
 export type ScheduleOperation = z.infer<typeof scheduleOperationSchema>;
+
+// Tipo per i clienti letti dalla tabella esterna (es. SCARLCONTI)
+export type ExternalCustomer = {
+  ANCODICE: string;       // CODICE AZIENDA
+  ANDESCRI: string;       // RAGIONE SOCIALE
+  ANPARIVA?: string | null; // PARTITA IVA
+  ANCODFIS?: string | null; // CODICE FISCALE
+  ANCODEST?: string | null; // SDI o CODICE UNIVOCO (corretto da ANCODDES)
+  ANINDIRI?: string | null; // INDIRIZZO
+  ANLOCALI?: string | null; // CITTA
+  ANPROVIN?: string | null; // PROVINCIA
+  ANNAZION?: string | null; // NAZIONE
+  ANCODPAG?: string | null; // CODICE PAGAMENTO
+  // Aggiungere altri campi se necessario dalla tabella SCARLCONTI
+};
