@@ -63,10 +63,12 @@ export default function POS() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4"> {/* Rimosso padding verticale pb-4 */}
-        <div className="grid grid-cols-12 gap-4 mt-0"> {/* Aggiunto mt-0 per rimuovere spazio sopra la griglia se presente */}
+      {/* Main Content */}
+      {/* Aggiungo flex flex-col h-[calc(100vh-theme(spacing.20))] per far sì che il container occupi l'altezza rimanente */}
+      <div className="container mx-auto px-4 flex flex-col h-[calc(100vh-theme(spacing.20))]"> {/* h-20 è circa l'altezza della topbar (h-10 + p-3*2) */}
+        <div className="grid grid-cols-12 gap-4 mt-0 flex-grow"> {/* Aggiunto flex-grow per far espandere la griglia */}
           {/* Left Column - Search, Category Tabs, and Product Display Area (2/3) */}
-          <div className="col-span-8">
+          <div className="col-span-8 h-full"> {/* Aggiunto h-full */}
             {/* Rimosso padding verticale dalla Card, aggiunto pb-2 per un minimo spazio sotto */}
             <Card className="px-2 shadow-sm border border-gray-100 rounded-lg overflow-hidden h-full flex flex-col pb-2"> 
               <ProductGrid 
@@ -99,7 +101,7 @@ export default function POS() {
           </div>
 
           {/* Right Column - Actions, Cart, Keypad (1/3) */}
-          <div className="col-span-4 space-y-2 flex flex-col"> {/* Modificato space-y-4 a space-y-2 */}
+          <div className="col-span-4 space-y-2 flex flex-col h-full"> {/* Aggiunto h-full e modificato space-y-4 a space-y-2 */}
             <Card className="p-2 shadow-sm border border-gray-100 rounded-lg">
               <div className="flex justify-around items-center">
                 <Button variant="ghost" size="icon" title="Svuota Carrello" onClick={() => setCart([])}>
