@@ -23,17 +23,38 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Product } from "@shared/schema";
-import { useState } from "react"; // Aggiunto useState
-import CashInputKeypad from "./CashInputKeypad"; // Importa il nuovo componente
+import { useState } from "react";
+import CashInputKeypad from "./CashInputKeypad";
+import CustomerSearchModal from "./CustomerSearchModal"; 
+import { ExternalCustomer } from "@shared/schema"; 
 import { 
   CreditCard, Landmark, Ticket, Gift, Wallet, CalendarOff, 
   University, TrendingUp, TrendingDown, Contact, Building, FileText, Minus, Plus 
 } from "lucide-react"; // Alcune icone esempio
 
 // Esempio di metodi di pagamento
-const paymentMethods = [
-  { name: "CONTANTI", icon: Wallet, amountField: true, id: "cash" },
-  { name: "BANCOMAT", icon: CreditCard, id: "bancomat" },
+// const paymentMethods = []; // Spostato dentro il componente
+
+export default function PaymentModal({
+  isOpen,
+  onOpenChange,
+  totalAmount,
+  // cartItems, 
+  onPaymentComplete,
+}: PaymentModalProps) {
+  const [cashReceivedAmount, setCashReceivedAmount] = useState(0);
+  const [isCashKeypadOpen, setIsCashKeypadOpen] = useState(false);
+  const [isCustomerSearchModalOpen, setIsCustomerSearchModalOpen] = useState(false); 
+  const [selectedCustomer, setSelectedCustomer] = useState<ExternalCustomer | null>(null); 
+
+  // Calcolo del resto e importo dovuto (REINSERITI)
+  const rest = cashReceivedAmount > 0 ? Math.max(0, cashReceivedAmount - totalAmount) : 0;
+  const amountDue = Math.max(0, totalAmount - cashReceivedAmount);
+
+  // Sposto paymentMethods qui dentro
+  const paymentMethods = [
+    { name: "CONTANTI", icon: Wallet, amountField: true, id: "cash" },
+    { name: "BANCOMAT", icon: CreditCard, id: "bancomat" },
   { name: "CARTA DI CREDITO", icon: CreditCard, id: "credit_card" },
   { name: "ASSEGNO", icon: FileText, id: "check" },
   { name: "TICKET", icon: Ticket, id: "ticket" },
@@ -47,22 +68,11 @@ const paymentMethods = [
   { name: "RIBA 60", icon: TrendingDown, id: "riba_60" }, 
   { name: "POSTE PAY", icon: CreditCard, id: "poste_pay" }, 
   { name: "SATISPAY", icon: Wallet, id: "satispay" }, // Modificato da PAYPAL e icona Wallet per ora
-];
+]; // Fine della definizione di paymentMethods spostata dentro il componente
 
-export default function PaymentModal({
-  isOpen,
-  onOpenChange,
-  totalAmount,
-  // cartItems, 
-  onPaymentComplete,
-}: PaymentModalProps) {
-  const [cashReceivedAmount, setCashReceivedAmount] = useState(0);
-  const [isCashKeypadOpen, setIsCashKeypadOpen] = useState(false);
-  
-  // Calcolo del resto: se cashReceivedAmount è maggiore di 0, il resto è cashReceivedAmount - totalAmount, altrimenti 0
-  // Questo è semplificato, una logica completa gestirebbe pagamenti multipli e misti.
-  const rest = cashReceivedAmount > 0 ? Math.max(0, cashReceivedAmount - totalAmount) : 0;
-  const amountDue = Math.max(0, totalAmount - cashReceivedAmount); // Importo ancora dovuto
+// La seconda definizione di export default function PaymentModal e le sue variabili di stato interne
+// sono state rimosse perché erano una duplicazione errata.
+// Il return corretto è quello che segue la prima (e ora unica) definizione di PaymentModal.
 
   const handleCashPaymentSubmit = (amount: number) => {
     setCashReceivedAmount(amount);
@@ -149,8 +159,15 @@ export default function PaymentModal({
                 <div>
                   <Label htmlFor="customer">Cliente</Label>
                   <div className="flex items-center gap-2">
-                    <Input id="customer" placeholder="Seleziona cliente..." />
-                    <Button variant="outline" size="icon"><Contact className="h-4 w-4" /></Button>
+                    <Input 
+                      id="customer" 
+                      placeholder="Seleziona cliente..." 
+                      value={selectedCustomer ? `${selectedCustomer.ANDESCRI} (${selectedCustomer.ANCODICE})` : ""}
+                      readOnly 
+                    />
+                    <Button variant="outline" size="icon" onClick={() => setIsCustomerSearchModalOpen(true)}>
+                      <Contact className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
                 {/* Campo Azienda rimosso */}
@@ -194,6 +211,15 @@ export default function PaymentModal({
           <Button onClick={handlePrint}>STAMPA</Button>
         </DialogFooter>
       </DialogContent>
+      <CustomerSearchModal
+        open={isCustomerSearchModalOpen}
+        onOpenChange={setIsCustomerSearchModalOpen}
+        onCustomerSelect={(customer) => {
+          setSelectedCustomer(customer);
+          // Qui potresti voler popolare automaticamente CF/P.IVA se disponibili
+          console.log("Cliente selezionato:", customer);
+        }}
+      />
     </Dialog>
   );
 }
