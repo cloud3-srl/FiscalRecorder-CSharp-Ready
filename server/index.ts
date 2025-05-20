@@ -45,7 +45,8 @@ app.use((req, res, next) => {
     const message = err.message || "Internal Server Error";
 
     res.status(status).json({ message });
-    throw err;
+    // throw err; // Rimosso: dopo aver inviato la risposta, non dovremmo lanciare ulteriormente l'errore qui.
+               // Lasciamo che il logging dell'errore avvenga prima o tramite un logger dedicato se necessario.
   });
 
   // importantly only setup vite in development and after
