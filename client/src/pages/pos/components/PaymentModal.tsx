@@ -6,18 +6,8 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { Product } from "@shared/schema"; // Se necessario per gli articoli
-import { 
-  CreditCard, Landmark, Ticket, Gift, Wallet, CalendarOff, 
-  University, TrendingUp, TrendingDown, Contact, Building, FileText, Minus, Plus 
-} from "lucide-react"; // Alcune icone esempio
 
+// Sposto l'interfaccia qui
 interface PaymentModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
@@ -26,36 +16,58 @@ interface PaymentModalProps {
   onPaymentComplete: (paymentDetails: any) => void; // Dettagli del pagamento
 }
 
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Product } from "@shared/schema";
+import { useState } from "react"; // Aggiunto useState
+import CashInputKeypad from "./CashInputKeypad"; // Importa il nuovo componente
+import { 
+  CreditCard, Landmark, Ticket, Gift, Wallet, CalendarOff, 
+  University, TrendingUp, TrendingDown, Contact, Building, FileText, Minus, Plus 
+} from "lucide-react"; // Alcune icone esempio
+
 // Esempio di metodi di pagamento
 const paymentMethods = [
-  { name: "CONTANTI", icon: Wallet, amountField: true },
-  { name: "BANCOMAT", icon: CreditCard },
-  { name: "CARTA DI CREDITO", icon: CreditCard },
-  { name: "ASSEGNO", icon: FileText },
-  { name: "TICKET", icon: Ticket },
-  { name: "BUONO PER SERVIZI", icon: Gift },
-  { name: "BUONO PER BENI", icon: Gift },
-  { name: "PREPAGATA", icon: CreditCard },
-  { name: "TS WALLET", icon: Wallet }, // Icona da rivedere se specifica
-  { name: "DIFFERITO", icon: CalendarOff },
-  { name: "BONIFICO BANCARIO", icon: Landmark },
-  { name: "RIBA 30", icon: TrendingUp }, // Icona esempio
-  { name: "RIBA 60", icon: TrendingDown }, // Icona esempio
-  { name: "POSTE PAY", icon: CreditCard }, // Icona esempio
-  { name: "PAYPAL", icon: Wallet }, // Icona esempio
+  { name: "CONTANTI", icon: Wallet, amountField: true, id: "cash" },
+  { name: "BANCOMAT", icon: CreditCard, id: "bancomat" },
+  { name: "CARTA DI CREDITO", icon: CreditCard, id: "credit_card" },
+  { name: "ASSEGNO", icon: FileText, id: "check" },
+  { name: "TICKET", icon: Ticket, id: "ticket" },
+  { name: "BUONO PER SERVIZI", icon: Gift, id: "service_voucher" },
+  { name: "BUONO PER BENI", icon: Gift, id: "goods_voucher" },
+  { name: "PREPAGATA", icon: CreditCard, id: "prepaid_card" },
+  // { name: "TS WALLET", icon: Wallet, id: "ts_wallet" }, // Rimosso come da screenshot
+  { name: "DIFFERITO", icon: CalendarOff, id: "deferred" },
+  { name: "BONIFICO BANCARIO", icon: Landmark, id: "bank_transfer" },
+  { name: "RIBA 30", icon: TrendingUp, id: "riba_30" }, 
+  { name: "RIBA 60", icon: TrendingDown, id: "riba_60" }, 
+  { name: "POSTE PAY", icon: CreditCard, id: "poste_pay" }, 
+  { name: "SATISPAY", icon: Wallet, id: "satispay" }, // Modificato da PAYPAL e icona Wallet per ora
 ];
 
 export default function PaymentModal({
   isOpen,
   onOpenChange,
   totalAmount,
-  // cartItems, // Non usato per ora
+  // cartItems, 
   onPaymentComplete,
 }: PaymentModalProps) {
-  // Stati per gli importi pagati, resto, etc.
-  // const [paidAmount, setPaidAmount] = useState(0);
-  // const [cashPaid, setCashPaid] = useState(0);
-  const rest = 0; // Da calcolare: totalAmount - paidAmount
+  const [cashReceivedAmount, setCashReceivedAmount] = useState(0);
+  const [isCashKeypadOpen, setIsCashKeypadOpen] = useState(false);
+  
+  // Calcolo del resto: se cashReceivedAmount è maggiore di 0, il resto è cashReceivedAmount - totalAmount, altrimenti 0
+  // Questo è semplificato, una logica completa gestirebbe pagamenti multipli e misti.
+  const rest = cashReceivedAmount > 0 ? Math.max(0, cashReceivedAmount - totalAmount) : 0;
+  const amountDue = Math.max(0, totalAmount - cashReceivedAmount); // Importo ancora dovuto
+
+  const handleCashPaymentSubmit = (amount: number) => {
+    setCashReceivedAmount(amount);
+    // Qui si potrebbe aggiungere logica per pagamenti parziali o multipli
+  };
 
   const handlePrint = () => {
     // Logica per la stampa/completamento pagamento
@@ -88,15 +100,40 @@ export default function PaymentModal({
             </div>
             <ScrollArea className="flex-grow p-2">
               <div className="grid grid-cols-2 gap-2">
-                {paymentMethods.map((method) => (
-                  <Button key={method.name} variant="outline" className="h-20 flex flex-col items-center justify-center text-center">
-                    <method.icon className="h-6 w-6 mb-1" />
-                    <span className="text-xs leading-tight">{method.name}</span>
-                    {method.amountField && <span className="text-blue-600 font-semibold text-sm mt-1">€0,00</span>}
-                  </Button>
-                ))}
+                {paymentMethods.map((method) => {
+                  if (method.id === "cash") {
+                    return (
+                      <CashInputKeypad
+                        key={method.id}
+                        open={isCashKeypadOpen}
+                        onOpenChange={setIsCashKeypadOpen}
+                        onSubmit={handleCashPaymentSubmit}
+                        triggerElement={
+                          <Button variant="outline" className="h-20 flex flex-col items-center justify-center text-center w-full">
+                            <method.icon className="h-6 w-6 mb-1" />
+                            <span className="text-xs leading-tight">{method.name}</span>
+                            {method.amountField && <span className="text-blue-600 font-semibold text-sm mt-1">€{cashReceivedAmount.toFixed(2)}</span>}
+                          </Button>
+                        }
+                      />
+                    );
+                  }
+                  return (
+                    <Button key={method.id} variant="outline" className="h-20 flex flex-col items-center justify-center text-center">
+                      <method.icon className="h-6 w-6 mb-1" />
+                      <span className="text-xs leading-tight">{method.name}</span>
+                      {/* Per altri metodi con amountField, si dovrà gestire lo stato separatamente */}
+                    </Button>
+                  );
+                })}
               </div>
             </ScrollArea>
+             <div className="p-4 border-t mt-auto"> {/* Spostato il display dell'importo dovuto qui */}
+              <div className="flex justify-between text-lg font-semibold">
+                <span>Importo Dovuto:</span>
+                <span className={amountDue > 0 ? "text-red-600" : "text-green-600"}>€{amountDue.toFixed(2)}</span>
+              </div>
+            </div>
           </div>
 
           {/* Colonna Destra: Dettagli Documento */}
@@ -116,13 +153,7 @@ export default function PaymentModal({
                     <Button variant="outline" size="icon"><Contact className="h-4 w-4" /></Button>
                   </div>
                 </div>
-                <div>
-                  <Label htmlFor="company">Azienda</Label>
-                  <div className="flex items-center gap-2">
-                    <Input id="company" placeholder="Seleziona azienda..." />
-                    <Button variant="outline" size="icon"><Building className="h-4 w-4" /></Button>
-                  </div>
-                </div>
+                {/* Campo Azienda rimosso */}
                 <div>
                   <Label htmlFor="causal">Causale</Label>
                   <Input id="causal" placeholder="Inserisci causale..." /> {/* Potrebbe essere un Select */}
