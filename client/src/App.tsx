@@ -54,13 +54,14 @@ function AppNavigation() {
 
   return (
     <>
-      {/* Header */}
+      {/* Header Rimosso */}
+      {/* 
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center">
           <div className="mr-4 md:flex">
             <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden"> {/* Visibile solo su mobile/tablet */}
+                <Button variant="ghost" size="icon" className="md:hidden">
                   <Menu className="h-6 w-6" />
                   <span className="sr-only">Apri menu</span>
                 </Button>
@@ -88,21 +89,26 @@ function AppNavigation() {
                   ))}
                 </nav>
                 <div className="absolute bottom-4 left-4 text-xs text-muted-foreground">
-                  Versione: 13.5.0 (942) {/* Come da screenshot */}
+                  Versione: 13.5.0 (942)
                 </div>
               </SheetContent>
             </Sheet>
-            {/* Logo visibile su desktop */}
             <Link href="/" className="mr-6 flex items-center space-x-2 hidden md:flex">
               <Logo />
             </Link>
           </div>
-          {/* Potremmo aggiungere qui altri elementi dell'header se necessario, es. nome utente, notifiche */}
         </div>
-      </header>
+      </header> 
+      */}
 
-      {/* Sidebar fissa per desktop (da implementare in Layout) e contenuto principale */}
-      <div className="flex flex-1">
+      {/* Sidebar fissa per desktop e contenuto principale */}
+      {/* Il div contenitore ora deve gestire l'altezza se l'header è rimosso, 
+          o il Layout in App() deve essere modificato.
+          Per ora, assumo che il Layout gestisca l'altezza completa.
+          Se la sidebar mobile era attivata dall'header, quella funzionalità sarà persa.
+          Lo screenshot non mostra un header, quindi questa rimozione è coerente.
+      */}
+      <div className="flex flex-1 h-screen"> {/* Aggiunto h-screen per occupare tutta l'altezza */}
         {/* Sidebar fissa per desktop */}
         <aside className="hidden md:block md:w-64 border-r bg-background p-4 space-y-1">
           <nav className="flex flex-col">
