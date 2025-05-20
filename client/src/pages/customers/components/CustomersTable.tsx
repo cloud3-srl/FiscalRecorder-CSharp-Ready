@@ -1,4 +1,4 @@
-import { ExternalCustomer } from "@shared/schema";
+import * as schema from "@shared/schema"; // Importa tutto da schema
 import {
   Table,
   TableBody,
@@ -10,7 +10,7 @@ import {
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"; // Per lo scroll orizzontale se necessario
 
 interface CustomersTableProps {
-  customers: ExternalCustomer[];
+  customers: schema.Customer[]; // Modificato per usare schema.Customer
 }
 
 export default function CustomersTable({ customers }: CustomersTableProps) {
@@ -19,17 +19,23 @@ export default function CustomersTable({ customers }: CustomersTableProps) {
   }
 
   // Definisci le colonne da visualizzare
-  // Potremmo rendere queste colonne configurabili in futuro
+  // Aggiornato per usare i campi di schema.Customer
   const columns = [
-    { accessorKey: "ANCODICE", header: "Codice" },
-    { accessorKey: "ANDESCRI", header: "Ragione Sociale" },
-    { accessorKey: "ANPARIVA", header: "P.IVA" },
-    { accessorKey: "ANCODFIS", header: "Cod. Fiscale" },
-    { accessorKey: "ANLOCALI", header: "Città" },
-    { accessorKey: "ANPROVIN", header: "Prov." },
-    { accessorKey: "ANINDIRI", header: "Indirizzo" },
-    { accessorKey: "ANCODEST", header: "SDI/PEC" },
-    { accessorKey: "ANCODPAG", header: "Cod. Pag." },
+    { accessorKey: "code", header: "Codice" },
+    { accessorKey: "name", header: "Ragione Sociale" },
+    { accessorKey: "vatNumber", header: "P.IVA" },
+    { accessorKey: "fiscalCode", header: "Cod. Fiscale" },
+    { accessorKey: "city", header: "Città" },
+    { accessorKey: "province", header: "Prov." },
+    { accessorKey: "address", header: "Indirizzo" },
+    { accessorKey: "sdiCode", header: "SDI/PEC" },
+    { accessorKey: "paymentCode", header: "Cod. Pag." },
+    { accessorKey: "email", header: "Email"},
+    { accessorKey: "phone", header: "Telefono"},
+    { accessorKey: "notes", header: "Note"},
+    { accessorKey: "points", header: "Punti"},
+    { accessorKey: "lastSyncedFromExternalAt", header: "Ultima Sync Esterna"},
+    { accessorKey: "updatedAt", header: "Ult. Modifica Locale"},
   ];
 
   return (
@@ -43,12 +49,16 @@ export default function CustomersTable({ customers }: CustomersTableProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {customers.map((customer, index) => (
-            // Usare ANCODICE come key se è unico, altrimenti index o un uuid generato
-            <TableRow key={customer.ANCODICE || index}> 
+          {customers.map((customer) => (
+            <TableRow key={customer.id}> {/* Usa customer.id come key */}
               {columns.map((column) => (
                 <TableCell key={column.accessorKey}>
-                  {customer[column.accessorKey as keyof ExternalCustomer] || '-'}
+                  {/* Gestione per i campi data e altri tipi se necessario */}
+                  {column.accessorKey === "lastSyncedFromExternalAt" || column.accessorKey === "updatedAt"
+                    ? customer[column.accessorKey as keyof schema.Customer] 
+                      ? new Date(customer[column.accessorKey as keyof schema.Customer] as string | number | Date).toLocaleString() 
+                      : '-'
+                    : String(customer[column.accessorKey as keyof schema.Customer] ?? '-')}
                 </TableCell>
               ))}
             </TableRow>

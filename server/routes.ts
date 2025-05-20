@@ -258,6 +258,24 @@ export async function registerRoutes(app: Express) {
     res.json(products);
   });
 
+  // Nuova rotta per recuperare i clienti dal database locale (PostgreSQL)
+  app.get("/api/local/customers", async (_req, res) => {
+    try {
+      const localCustomers = await db.select().from(schema.customers).orderBy(desc(schema.customers.updatedAt)); // Ordina per i più recenti aggiornati/creati
+      res.json({
+        success: true,
+        customers: localCustomers
+      });
+    } catch (error) {
+      console.error('Errore nel recupero dei clienti locali:', error);
+      res.status(500).json({ 
+        success: false,
+        error: "Impossibile recuperare i clienti locali",
+        message: error instanceof Error ? error.message : 'Errore sconosciuto'
+      });
+    }
+  });
+
   app.post("/api/products", async (req, res) => {
     const result = insertProductSchema.safeParse(req.body);
     if (!result.success) {

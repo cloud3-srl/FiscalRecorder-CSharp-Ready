@@ -11,6 +11,7 @@ import AdminPage from "@/pages/admin";
 import DatabaseConfigPage from "@/pages/admin/database";
 import ReportPage from "@/pages/report";
 import CustomersPage from "@/pages/customers"; // Nuova importazione
+import DbSyncPage from "@/pages/admin/db-sync"; // Importa la nuova pagina
 import NotFound from "@/pages/not-found";
 import { 
   Home, Settings, Database, FileText, Menu, Briefcase, Users, FileClock, Star, Wallet, HelpCircle, Megaphone, BarChart3, FileArchive, Building2 
@@ -33,22 +34,37 @@ const navItems = [
   { href: "/deferred-invoices", label: "Fattura differita", icon: FileClock },
   { href: "/fidelity", label: "Fidelity", icon: Star },
   // { href: "/ts-wallet", label: "TS Wallet", icon: Wallet }, // Rimosso come da screenshot
-  { href: "/settings", label: "Impostazioni", icon: Settings }, // Icona aggiornata
+  { 
+    href: "/settings", // Questo potrebbe diventare un gruppo o una pagina indice per le impostazioni
+    label: "Impostazioni", 
+    icon: Settings 
+  }, 
+  // Aggiungo Db Sync come sotto-voce o voce separata. Per ora, come voce separata che punta ad admin.
+  // L'utente ha detto "sotto-voce del tab 'impostazioni' Chiamata 'Db Sync' che richiama la pagina sotto admin/database"
+  // Questo suggerisce che /admin/database potrebbe avere più tab.
+  // Per ora, creo una route distinta /admin/db-sync per la pagina di sincronizzazione.
+  // E una voce di menu "Db Sync" che potrebbe essere raggruppata sotto Impostazioni in futuro.
+  // Per semplicità, la aggiungo come voce di primo livello per ora, o subito dopo Impostazioni.
+  // Decido di metterla logicamente vicino a Database Config, quindi sotto Impostazioni.
+  // { href: "/admin", label: "Admin Generale", icon: Settings }, // Se /settings diventa un indice
+  { href: "/admin/database", label: "Config. DB", icon: Database }, // Già esistente in routes, ma non in navItems
+  { href: "/admin/db-sync", label: "Db Sync", icon: FileClock }, // Nuova voce per la sincronizzazione
   { href: "/help-center", label: "Centro assistenza", icon: HelpCircle },
   { href: "/news", label: "News e Comunicazioni", icon: Megaphone },
 ];
 
 // Le route attuali, da aggiornare se necessario per le nuove pagine
 const routes = [
-  { path: "/", component: POS, label: "POS", icon: Home }, // Aggiunto per coerenza, anche se non nel menu laterale
-  { path: "/admin", component: AdminPage, label: "Admin", icon: Settings },
-  { path: "/admin/database", component: DatabaseConfigPage, label: "Database Config", icon: Database },
-  { path: "/reports", component: ReportPage, label: "Report", icon: BarChart3 }, // Aggiornato per matchare navItems
-  { path: "/customers", component: CustomersPage, label: "Clienti", icon: Users }, // Nuova route
-  // Rimuovo anche la potenziale route /companies se esistesse, per pulizia.
-  // { path: "/companies", component: NotFound, label: "Aziende", icon: Building2 }, // Esempio se esistesse
+  { path: "/", component: POS, label: "POS", icon: Home }, 
+  { path: "/admin", component: AdminPage, label: "Admin", icon: Settings }, // Pagina Admin generale
+  { path: "/admin/database", component: DatabaseConfigPage, label: "Config. DB", icon: Database },
+  { path: "/admin/db-sync", component: DbSyncPage, label: "Db Sync", icon: FileClock }, // Decommentata e aggiunta route
+  { path: "/reports", component: ReportPage, label: "Report", icon: BarChart3 }, 
+  { path: "/customers", component: CustomersPage, label: "Clienti", icon: Users }, 
   // Aggiungere qui le altre route per le nuove pagine del menu laterale quando verranno create
   // Esempio: { path: "/documents", component: DocumentsPage, label: "Documenti", icon: FileArchive },
+  // La route /settings potrebbe puntare a AdminPage o a una pagina indice delle impostazioni
+  { path: "/settings", component: AdminPage, label: "Impostazioni", icon: Settings }, 
 ];
 
 

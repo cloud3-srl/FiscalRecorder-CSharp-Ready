@@ -1,22 +1,22 @@
 import { useQuery } from "@tanstack/react-query";
-import { ExternalCustomer } from "@shared/schema";
+import * as schema from "@shared/schema"; // Importa tutto da schema
 import CustomersTable from "./components/CustomersTable";
-import { PageHeader, PageTitle } from "@/components/ui/layout"; // Assumendo che questi esistano e siano utili
+import { PageHeader, PageTitle } from "@/components/ui/layout"; 
 
-// Funzione helper per recuperare i clienti
-async function fetchCustomers(): Promise<{ success: boolean; customers?: ExternalCustomer[]; error?: string }> {
-  const response = await fetch('/api/customers?companyCode=SCARL'); // Aggiunto companyCode per coerenza, anche se il backend lo usa di default
+// Funzione helper per recuperare i clienti locali
+async function fetchLocalCustomers(): Promise<{ success: boolean; customers?: schema.Customer[]; error?: string }> {
+  const response = await fetch('/api/local/customers'); 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.message || "Errore nel recupero dei clienti");
+    throw new Error(errorData.message || "Errore nel recupero dei clienti locali");
   }
   return response.json();
 }
 
 export default function CustomersPage() {
-  const { data, isLoading, error } = useQuery<{ success: boolean; customers?: ExternalCustomer[]; error?: string }, Error>({
-    queryKey: ['externalCustomers'],
-    queryFn: fetchCustomers,
+  const { data, isLoading, error } = useQuery<{ success: boolean; customers?: schema.Customer[]; error?: string }, Error>({
+    queryKey: ['localCustomers'], // Aggiornata queryKey
+    queryFn: fetchLocalCustomers, // Aggiornata funzione di fetch
   });
 
   if (isLoading) {
@@ -34,7 +34,7 @@ export default function CustomersPage() {
   return (
     <div className="space-y-4">
       <PageHeader>
-        <PageTitle>Anagrafica Clienti Esterna</PageTitle>
+        <PageTitle>Anagrafica Clienti</PageTitle> {/* Titolo aggiornato */}
         {/* Qui potrebbero andare pulsanti azione come "Aggiungi Cliente" o filtri */}
       </PageHeader>
       <CustomersTable customers={data.customers} />

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { ExternalCustomer } from '@shared/schema';
+// import { ExternalCustomer } from '@shared/schema'; // Rimosso, useremo schema.Customer
+import * as schema from '@shared/schema'; // Aggiunto import per schema
 import { useQuery } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose, DialogFooter } from '@/components/ui/dialog'; // Aggiunto DialogFooter
 import { Button } from '@/components/ui/button';
@@ -10,15 +11,16 @@ import { Command, CommandInput, CommandList, CommandEmpty, CommandItem } from '@
 interface CustomerSearchModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCustomerSelect: (customer: ExternalCustomer) => void;
+  onCustomerSelect: (customer: schema.Customer) => void; // Modificato per usare schema.Customer
   triggerButton?: React.ReactNode; // Opzionale, se vogliamo un trigger esterno
 }
 
-async function fetchAllCustomers(): Promise<{ success: boolean; customers?: ExternalCustomer[]; error?: string }> {
-  const response = await fetch('/api/customers?companyCode=SCARL'); // Assumiamo companyCode fisso per ora
+// Modificata per usare la nuova API e il tipo Customer locale
+async function fetchLocalCustomers(): Promise<{ success: boolean; customers?: schema.Customer[]; error?: string }> { 
+  const response = await fetch('/api/local/customers'); 
   if (!response.ok) {
     const errorData = await response.json();
-    throw new Error(errorData.message || "Errore nel recupero dei clienti");
+    throw new Error(errorData.message || "Errore nel recupero dei clienti locali");
   }
   return response.json();
 }
@@ -26,20 +28,22 @@ async function fetchAllCustomers(): Promise<{ success: boolean; customers?: Exte
 export default function CustomerSearchModal({ open, onOpenChange, onCustomerSelect, triggerButton }: CustomerSearchModalProps) {
   const [searchTerm, setSearchTerm] = useState('');
   
-  const { data: customersData, isLoading, error } = useQuery<{ success: boolean; customers?: ExternalCustomer[]; error?: string }, Error>({
-    queryKey: ['allExternalCustomersForSearch'],
-    queryFn: fetchAllCustomers,
-    enabled: open, // Carica i clienti solo quando il modale è aperto (o sta per aprirsi)
+  // Modificato per usare fetchLocalCustomers e il tipo Customer locale
+  const { data: customersData, isLoading, error } = useQuery<{ success: boolean; customers?: schema.Customer[]; error?: string }, Error>({
+    queryKey: ['allLocalCustomersForSearch'], // Chiave query aggiornata
+    queryFn: fetchLocalCustomers, // Funzione di fetch aggiornata
+    enabled: open, 
   });
 
+  // Modificato per filtrare i campi del tipo Customer locale
   const filteredCustomers = customersData?.customers?.filter(customer =>
-    customer.ANDESCRI.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.ANCODICE.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (customer.ANPARIVA && customer.ANPARIVA.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (customer.ANCODFIS && customer.ANCODFIS.toLowerCase().includes(searchTerm.toLowerCase()))
+    customer.name.toLowerCase().includes(searchTerm.toLowerCase()) || // Usa customer.name
+    customer.code.toLowerCase().includes(searchTerm.toLowerCase()) || // Usa customer.code
+    (customer.vatNumber && customer.vatNumber.toLowerCase().includes(searchTerm.toLowerCase())) || // Usa customer.vatNumber
+    (customer.fiscalCode && customer.fiscalCode.toLowerCase().includes(searchTerm.toLowerCase())) // Usa customer.fiscalCode
   ) || [];
 
-  const handleSelect = (customer: ExternalCustomer) => {
+  const handleSelect = (customer: schema.Customer) => { // Modificato per usare schema.Customer
     onCustomerSelect(customer);
     onOpenChange(false);
   };
@@ -66,15 +70,15 @@ export default function CustomerSearchModal({ open, onOpenChange, onCustomerSele
               )}
               {!isLoading && !error && filteredCustomers.map((customer) => (
                 <CommandItem
-                  key={customer.ANCODICE}
-                  value={`${customer.ANDESCRI} ${customer.ANCODICE}`} // Valore per la ricerca interna di Command
+                  key={customer.code} // Usa customer.code
+                  value={`${customer.name} ${customer.code}`} // Usa customer.name e customer.code
                   onSelect={() => handleSelect(customer)}
                   className="cursor-pointer"
                 >
                   <div className="flex flex-col">
-                    <span className="font-medium">{customer.ANDESCRI}</span>
+                    <span className="font-medium">{customer.name}</span> {/* Usa customer.name */}
                     <span className="text-xs text-muted-foreground">
-                      Cod: {customer.ANCODICE} - P.IVA: {customer.ANPARIVA || 'N/D'} - CF: {customer.ANCODFIS || 'N/D'}
+                      Cod: {customer.code} - P.IVA: {customer.vatNumber || 'N/D'} - CF: {customer.fiscalCode || 'N/D'} {/* Usa campi locali */}
                     </span>
                   </div>
                 </CommandItem>

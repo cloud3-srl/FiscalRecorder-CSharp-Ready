@@ -26,7 +26,8 @@ import { Product } from "@shared/schema";
 import { useState } from "react";
 import CashInputKeypad from "./CashInputKeypad";
 import CustomerSearchModal from "./CustomerSearchModal"; 
-import { ExternalCustomer } from "@shared/schema"; 
+// import { ExternalCustomer } from "@shared/schema"; // Rimosso, useremo schema.Customer
+import * as schema from "@shared/schema"; // Aggiunto per schema.Customer
 import { 
   CreditCard, Landmark, Ticket, Gift, Wallet, CalendarOff, 
   University, TrendingUp, TrendingDown, Contact, Building, FileText, Minus, Plus 
@@ -45,7 +46,7 @@ export default function PaymentModal({
   const [cashReceivedAmount, setCashReceivedAmount] = useState(0);
   const [isCashKeypadOpen, setIsCashKeypadOpen] = useState(false);
   const [isCustomerSearchModalOpen, setIsCustomerSearchModalOpen] = useState(false); 
-  const [selectedCustomer, setSelectedCustomer] = useState<ExternalCustomer | null>(null); 
+  const [selectedCustomer, setSelectedCustomer] = useState<schema.Customer | null>(null); // Modificato tipo
 
   // Calcolo del resto e importo dovuto (REINSERITI)
   const rest = cashReceivedAmount > 0 ? Math.max(0, cashReceivedAmount - totalAmount) : 0;
@@ -162,7 +163,7 @@ export default function PaymentModal({
                     <Input 
                       id="customer" 
                       placeholder="Seleziona cliente..." 
-                      value={selectedCustomer ? `${selectedCustomer.ANDESCRI} (${selectedCustomer.ANCODICE})` : ""}
+                      value={selectedCustomer ? `${selectedCustomer.name} (${selectedCustomer.code})` : ""} // Usa campi locali
                       readOnly 
                     />
                     <Button variant="outline" size="icon" onClick={() => setIsCustomerSearchModalOpen(true)}>

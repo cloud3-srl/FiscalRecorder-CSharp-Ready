@@ -98,13 +98,19 @@ export const customers = pgTable("customers", {
   name: varchar("name", { length: 255 }).notNull(),
   fiscalCode: varchar("fiscal_code", { length: 16 }),
   vatNumber: varchar("vat_number", { length: 20 }),
-  address: text("address"),
-  city: varchar("city", { length: 100 }),
+  address: text("address"), // Corrisponde a ANINDIRI
+  city: varchar("city", { length: 100 }), // Corrisponde a ANLOCALI
+  province: varchar("province", { length: 50 }), // Nuovo, per ANPROVIN
+  country: varchar("country", { length: 50 }), // Nuovo, per ANNAZION
+  sdiCode: varchar("sdi_code", { length: 7 }), // Nuovo, per ANCODEST (o ANCODDES)
+  paymentCode: varchar("payment_code", { length: 50 }), // Nuovo, per ANCODPAG
   email: varchar("email", { length: 255 }),
   phone: varchar("phone", { length: 50 }),
   notes: text("notes"),
   points: integer("points").default(0),
-  createdAt: timestamp("created_at").defaultNow().notNull()
+  lastSyncedFromExternalAt: timestamp("last_synced_from_external_at"), // Nuovo
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull() // Aggiungo updatedAt per tracciare modifiche locali
 });
 
 // Nuova tabella per i log di connessione al database
