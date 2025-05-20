@@ -28,7 +28,7 @@ const Logo = () => (
 const navItems = [
   { href: "/reports", label: "Report", icon: BarChart3 }, // Modificato da /report e icona
   { href: "/documents", label: "Documenti", icon: FileArchive },
-  { href: "/companies", label: "Aziende", icon: Building2 },
+  // { href: "/companies", label: "Aziende", icon: Building2 }, // Rimosso come da richiesta
   { href: "/customers", label: "Clienti", icon: Users },
   { href: "/deferred-invoices", label: "Fattura differita", icon: FileClock },
   { href: "/fidelity", label: "Fidelity", icon: Star },
@@ -45,6 +45,8 @@ const routes = [
   { path: "/admin/database", component: DatabaseConfigPage, label: "Database Config", icon: Database },
   { path: "/reports", component: ReportPage, label: "Report", icon: BarChart3 }, // Aggiornato per matchare navItems
   { path: "/customers", component: CustomersPage, label: "Clienti", icon: Users }, // Nuova route
+  // Rimuovo anche la potenziale route /companies se esistesse, per pulizia.
+  // { path: "/companies", component: NotFound, label: "Aziende", icon: Building2 }, // Esempio se esistesse
   // Aggiungere qui le altre route per le nuove pagine del menu laterale quando verranno create
   // Esempio: { path: "/documents", component: DocumentsPage, label: "Documenti", icon: FileArchive },
 ];
