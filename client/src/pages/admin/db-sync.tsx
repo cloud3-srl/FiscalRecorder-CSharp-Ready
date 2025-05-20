@@ -30,37 +30,97 @@ export default function DbSyncPage() {
   const [productsSyncStatus, setProductsSyncStatus] = useState<SyncStatus>(initialSyncStatus);
   const [customersSyncStatus, setCustomersSyncStatus] = useState<SyncStatus>(initialSyncStatus);
 
-  // TODO: Funzioni per recuperare lo stato attuale della sync dal backend
-  // TODO: Funzioni per avviare la sync manuale
+  // TODO: Funzioni per recuperare lo stato attuale della sync dal backend (es. da databaseConfigs)
   // TODO: Funzioni per pianificare la sync
+
+  const fetchSyncStatus = async () => {
+    // Questa funzione dovrebbe recuperare lo stato dell'ultima sync per prodotti e clienti
+    // Ad esempio, leggendo il campo lastSync dalla tabella databaseConfigs per la config attiva
+    // Per ora, lo lasciamo simulato o da implementare con una nuova API
+    try {
+      const response = await fetch('/api/admin/database-configs'); // Esistente, prendiamo la attiva
+      const configs = await response.json();
+      const activeConfig = configs.find((c: any) => c.isActive);
+      console.log("Active config per sync status:", activeConfig); // DEBUG
+      if (activeConfig && activeConfig.lastSync) {
+        const lastSyncDate = new Date(activeConfig.lastSync).toLocaleString();
+        console.log("Last sync date da config:", lastSyncDate); // DEBUG
+        // Assumiamo che lastSync si applichi a entrambi per ora, o che serva un campo per tipo
+        setCustomersSyncStatus(prev => ({ ...prev, lastSync: lastSyncDate, statusMessage: "Pronto", isSyncing: false, progress: 0 }));
+        setProductsSyncStatus(prev => ({ ...prev, lastSync: lastSyncDate, statusMessage: "Pronto", isSyncing: false, progress: 0 })); // TODO: distinguere lastSync per tipo
+      } else {
+        console.log("Nessuna active config con lastSync trovata."); //DEBUG
+        setCustomersSyncStatus(prev => ({ ...prev, lastSync: null, statusMessage: "Pronto"}));
+        setProductsSyncStatus(prev => ({ ...prev, lastSync: null, statusMessage: "Pronto"}));
+      }
+    } catch (error) {
+      console.error("Errore nel recuperare lo stato della sync:", error);
+      setCustomersSyncStatus(prev => ({ ...prev, lastSync: null, statusMessage: "Errore caricamento stato"}));
+      setProductsSyncStatus(prev => ({ ...prev, lastSync: null, statusMessage: "Errore caricamento stato"}));
+    }
+  };
+
+  useEffect(() => {
+    fetchSyncStatus();
+  }, []);
 
   const handleManualSync = async (type: 'products' | 'customers') => {
     const setStatus = type === 'products' ? setProductsSyncStatus : setCustomersSyncStatus;
+    const endpoint = type === 'products' ? '/api/admin/sync/products-now' : '/api/admin/sync/customers-now'; // TODO: creare endpoint per prodotti
+
     setStatus(prev => ({ ...prev, isSyncing: true, progress: 0, statusMessage: "Avvio sincronizzazione...", error: null }));
 
-    // Simula una chiamata API
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    let currentProgress = 0;
-    const interval = setInterval(() => {
-      currentProgress += 10;
-      if (currentProgress <= 100) {
-        setStatus(prev => ({ ...prev, progress: currentProgress, statusMessage: `Sincronizzazione in corso... ${currentProgress}%` }));
+    try {
+      // Per ora, solo i clienti hanno un endpoint reale
+      if (type === 'customers') {
+        const response = await fetch(endpoint, { method: 'POST' });
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          setStatus(prev => ({ 
+            ...prev, 
+            isSyncing: false, 
+            progress: 100, 
+            statusMessage: `${result.message || "Sincronizzazione completata!"} (Aggiornati: ${result.updatedCount || 0}, Importati: ${result.importedCount || 0})`, 
+            lastSync: new Date().toLocaleString(), 
+            error: null 
+          }));
+          console.log("Risultato sync clienti:", result);
+          // Richiama fetchSyncStatus per aggiornare dalla sorgente di verità (DB)
+          fetchSyncStatus(); 
+        } else {
+          setStatus(prev => ({ 
+            ...prev, 
+            isSyncing: false, 
+            progress: 0, // o l'ultimo progresso valido
+            statusMessage: `Errore: ${result.message || result.error || 'Errore sconosciuto'}`, 
+            error: result.message || result.error || 'Errore sconosciuto'
+          }));
+        }
       } else {
-        clearInterval(interval);
+        // Simula sync prodotti per ora
+        await new Promise(resolve => setTimeout(resolve, 1000));
         setStatus(prev => ({ 
-          ...prev, 
-          isSyncing: false, 
-          progress: 100, 
-          statusMessage: "Sincronizzazione completata!", 
-          lastSync: new Date().toLocaleString(),
-          error: null // Simula successo
-          // error: "Errore durante la fase finale!" // Simula errore
-        }));
+            ...prev, 
+            isSyncing: false, 
+            progress: 100, 
+            statusMessage: "Sincronizzazione prodotti (simulata) completata!", 
+            lastSync: new Date().toLocaleString(),
+            error: null
+          }));
       }
-    }, 200);
+    } catch (error) {
+      console.error(`Errore durante la sincronizzazione manuale (${type}):`, error);
+      setStatus(prev => ({ 
+        ...prev, 
+        isSyncing: false, 
+        statusMessage: `Errore di rete o API: ${error instanceof Error ? error.message : String(error)}`,
+        error: error instanceof Error ? error.message : String(error)
+      }));
+    }
   };
   
-  // TODO: UI per la pianificazione
+  // TODO: UI e logica per la pianificazione
   const [isProductsSyncScheduled, setIsProductsSyncScheduled] = useState(false);
   const [isCustomersSyncScheduled, setIsCustomersSyncScheduled] = useState(false);
 

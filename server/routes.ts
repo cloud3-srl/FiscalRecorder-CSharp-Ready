@@ -12,8 +12,15 @@ import { parse } from "csv-parse";
 import { Readable } from "stream";
 import { exec } from "child_process";
 import { promisify } from "util";
-import { testMssqlConnection, executeMssqlQuery, queryC3EXPPOS, importProductsFromC3EXPPOS, getCustomers } from "./mssql"; // Aggiunto getCustomers
-import { ExternalCustomer } from "@shared/schema"; // Aggiunto ExternalCustomer
+import { 
+  testMssqlConnection, 
+  executeMssqlQuery, 
+  queryC3EXPPOS, 
+  importProductsFromC3EXPPOS, 
+  getCustomers,
+  importExternalCustomersToLocalDb // Aggiunto import statico
+} from "./mssql"; 
+import { ExternalCustomer } from "@shared/schema"; 
 
 const execAsync = promisify(exec);
 
@@ -825,7 +832,59 @@ export async function registerRoutes(app: Express) {
     }
   });
 
-  // Nuova rotta per recuperare i clienti
+  // Nuova rotta API per avviare la sincronizzazione manuale dei clienti
+  app.post("/api/admin/sync/customers-now", async (req, res) => {
+    try {
+      const [activeConfig] = await db
+        .select()
+        .from(databaseConfigs)
+        .where(eq(databaseConfigs.isActive, true))
+        .limit(1);
+
+      if (!activeConfig) {
+        return res.status(400).json({ 
+          success: false,
+          error: "Nessuna configurazione di database MSSQL attiva per la sincronizzazione."
+        });
+      }
+      
+      // Assumiamo che companyCode sia fisso o recuperato dalla configurazione/richiesta
+      const companyCode = req.body.companyCode || 'SCARL'; // O da activeConfig se memorizzato lì
+      
+      // Usa la funzione importata staticamente
+      const syncResult = await importExternalCustomersToLocalDb(activeConfig, companyCode);
+
+      if (syncResult.success) {
+        // Aggiorna lastSync nella configurazione attiva
+        await db.update(databaseConfigs)
+          .set({ lastSync: new Date() })
+          .where(eq(databaseConfigs.id, activeConfig.id));
+        
+        res.json({ 
+          success: true, 
+          message: "Sincronizzazione clienti completata.",
+          importedCount: syncResult.importedCount,
+          updatedCount: syncResult.updatedCount 
+        });
+      } else {
+        res.status(500).json({ 
+          success: false, 
+          error: "Errore durante la sincronizzazione dei clienti.", 
+          message: syncResult.error 
+        });
+      }
+    } catch (error) {
+      console.error('Errore API durante la sincronizzazione manuale dei clienti:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: "Errore API imprevisto durante la sincronizzazione.",
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+
+  // Nuova rotta per recuperare i clienti (da MSSQL, per ora rimane per confronto o usi specifici)
   app.get("/api/customers", async (req, res) => {
     try {
       const [activeConfig] = await db
