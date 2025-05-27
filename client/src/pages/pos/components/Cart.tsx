@@ -1,6 +1,6 @@
 import { Product } from "@shared/schema";
 import { Button } from "@/components/ui/button";
-import { Minus, Plus, Trash2, ShoppingCart } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingCart, Save, Users, Store, RotateCcw, FileX } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -30,6 +30,10 @@ export default function Cart({ items, setItems }: CartProps) {
     setItems(items.filter(item => item.product.id !== productId));
   };
 
+  const clearCart = () => {
+    setItems([]);
+  };
+
   const total = items.reduce(
     (sum, item) => sum + (parseFloat(item.product.price) * item.quantity),
     0
@@ -37,8 +41,71 @@ export default function Cart({ items, setItems }: CartProps) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Totale spostato in alto */}
-      <div className="border-b pb-2 mb-2"> {/* Modificato da border-t, pt-4, mt-auto a border-b, pb-2, mb-2 */}
+      {/* Icone azioni sopra il totale */}
+      <div className="mb-4 space-y-2">
+        {/* Prima riga: Svuota, Salva, Pulisci */}
+        <div className="flex justify-center gap-8">
+          <div className="flex flex-col items-center">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-10 w-10 rounded-full"
+              onClick={clearCart}
+              disabled={items.length === 0}
+            >
+              <Trash2 className="h-5 w-5" />
+            </Button>
+            <span className="text-xs mt-1 text-center">Svuota</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-10 w-10 rounded-full"
+            >
+              <Save className="h-5 w-5" />
+            </Button>
+            <span className="text-xs mt-1 text-center">Salva</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-10 w-10 rounded-full"
+            >
+              <RotateCcw className="h-5 w-5" />
+            </Button>
+            <span className="text-xs mt-1 text-center">Pulisci</span>
+          </div>
+        </div>
+        
+        {/* Seconda riga: Cliente, Negozio */}
+        <div className="flex justify-center gap-8">
+          <div className="flex flex-col items-center">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-10 w-10 rounded-full"
+            >
+              <Users className="h-5 w-5" />
+            </Button>
+            <span className="text-xs mt-1 text-center">Cliente</span>
+          </div>
+          <div className="flex flex-col items-center">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-10 w-10 rounded-full"
+            >
+              <Store className="h-5 w-5" />
+            </Button>
+            <span className="text-xs mt-1 text-center">Negozio</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Totale */}
+      <div className="border-b pb-2 mb-2">
         <div className="flex justify-between text-lg font-bold">
           <span className="text-gray-700">Totale</span>
           <span className="text-blue-600">€{total.toFixed(2)}</span>
@@ -46,17 +113,17 @@ export default function Cart({ items, setItems }: CartProps) {
       </div>
 
       {/* Lista articoli scrollabile */}
-      <div className="overflow-y-auto flex-grow"> {/* Assicurato overflow-y-auto */}
+      <div className="overflow-y-auto flex-grow">
         <Table>
           <TableHeader>
-            <TableRow className="bg-gray-50"> {/* Rimosso sticky top-0 z-10 */}
+            <TableRow className="bg-gray-50">
               <TableHead className="text-xs font-semibold text-gray-600">Descrizione</TableHead>
               <TableHead className="text-xs font-semibold text-gray-600 text-center w-[100px]">Qtà</TableHead>
               <TableHead className="text-xs font-semibold text-gray-600 text-right">Prezzo</TableHead>
               <TableHead className="text-xs font-semibold text-gray-600 text-right w-[40px]">Azioni</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>{/* Rimuovo spazi qui */}
+          <TableBody>
             {items.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4} className="text-center text-muted-foreground py-4">
@@ -64,7 +131,8 @@ export default function Cart({ items, setItems }: CartProps) {
                 </TableCell>
               </TableRow>
             )}
-            {items.map(({ product, quantity }) => (<TableRow key={product.id} className="hover:bg-blue-50 transition-colors">
+            {items.map(({ product, quantity }) => (
+              <TableRow key={product.id} className="hover:bg-blue-50 transition-colors">
                 <TableCell className="max-w-[150px] truncate text-sm">
                   {product.name}
                 </TableCell>
@@ -87,7 +155,8 @@ export default function Cart({ items, setItems }: CartProps) {
                     <Trash2 className="h-3 w-3" />
                   </Button>
                 </TableCell>
-              </TableRow>))}
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </div>
