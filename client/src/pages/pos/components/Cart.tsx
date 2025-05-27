@@ -41,10 +41,9 @@ export default function Cart({ items, setItems }: CartProps) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Icone azioni sopra il totale */}
-      <div className="mb-4 space-y-2">
-        {/* Prima riga: Svuota, Salva, Pulisci */}
-        <div className="flex justify-center gap-8">
+      {/* Icone azioni sopra il totale - tutte in una riga */}
+      <div className="mb-4">
+        <div className="flex justify-center gap-4">
           <div className="flex flex-col items-center">
             <Button 
               variant="ghost" 
@@ -77,10 +76,6 @@ export default function Cart({ items, setItems }: CartProps) {
             </Button>
             <span className="text-xs mt-1 text-center">Pulisci</span>
           </div>
-        </div>
-        
-        {/* Seconda riga: Cliente, Negozio */}
-        <div className="flex justify-center gap-8">
           <div className="flex flex-col items-center">
             <Button 
               variant="ghost" 
