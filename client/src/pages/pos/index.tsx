@@ -10,9 +10,11 @@ import QuickButtons from "./components/QuickButtons";
 import Cart from "./components/Cart";
 import CustomerSearchModal from "./components/CustomerSearchModal";
 import { Product, Customer } from "@shared/schema";
-import { Trash2, Save, PlusCircle, UserSearch, Store } from "lucide-react";
+import { Trash2, Save, PlusCircle, UserSearch, Store, RotateCcw } from "lucide-react";
 import NewNumericKeypad from "./components/NewNumericKeypad";
 import PaymentModal from "./components/PaymentModal";
+import { useAudio } from "@/hooks/use-audio";
+import "@/styles/pos.css";
 
 // Interfaccia per i conti salvati
 interface SavedAccount {
@@ -41,6 +43,9 @@ export default function POS() {
   const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
   const [accountNameToSave, setAccountNameToSave] = useState("");
 
+  // Hook per audio
+  const { playBeep } = useAudio();
+
   const addToCart = (product: Product, quantity: number = 1) => {
     const existingItem = cart.find(item => item.product.id === product.id);
     if (existingItem) {
@@ -52,6 +57,9 @@ export default function POS() {
     } else {
       setCart([...cart, { product, quantity }]);
     }
+    
+    // Riproduci il beep quando viene aggiunto un prodotto
+    playBeep();
   };
 
   const currentTotal = cart.reduce((sum, item) => sum + parseFloat(item.product.price) * item.quantity, 0);
@@ -187,61 +195,33 @@ export default function POS() {
               <Cart items={cart} setItems={setCart} />
             </Card>
             
-            {/* Spazio tra carrello e bottoni di controllo */}
-            <div className="h-4"></div>
-            
-            {/* Bottoni di controllo spostati in basso e ingranditi */}
-            <Card className="p-4 shadow-sm border border-gray-100 rounded-lg">
-              <div className="grid grid-cols-3 gap-3">
-                <Button 
-                  variant="ghost" 
-                  title="Svuota Carrello" 
-                  onClick={handleClearCart} 
-                  className="flex flex-col h-20 w-full text-base"
-                >
-                  <Trash2 className="h-8 w-8 mb-1" />
-                  <span className="text-sm">Svuota</span>
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  title="Salva Conto" 
-                  onClick={handleSaveAccount} 
-                  className="flex flex-col h-20 w-full text-base"
-                >
-                  <Save className="h-8 w-8 mb-1" />
-                  <span className="text-sm">Salva</span>
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  title="Pulisci Campi" 
-                  onClick={handleClearCart} 
-                  className="flex flex-col h-20 w-full text-base"
-                >
-                  <PlusCircle className="h-8 w-8 mb-1" />
-                  <span className="text-sm">Pulisci</span>
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  title="Associa Cliente" 
-                  onClick={handleSelectCustomer} 
-                  className="flex flex-col h-20 w-full text-base"
-                >
-                  <UserSearch className="h-8 w-8 mb-1" />
-                  <span className="text-sm">Cliente</span>
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  title="Info Negozio/Azienda" 
-                  className="flex flex-col h-20 w-full text-base"
-                >
-                  <Store className="h-8 w-8 mb-1" />
-                  <span className="text-sm">Negozio</span>
-                </Button>
-                <div className="flex flex-col h-20 w-full"></div> {/* Spazio vuoto per mantenere griglia 3x2 */}
+            {/* Bottoni rapidi sopra il tastierino */}
+            <div className="mt-4 mb-3">
+              <div className="flex justify-center gap-3">
+                <div className="quick-action-btn" onClick={handleClearCart}>
+                  <Trash2 className="h-6 w-6 text-gray-600" />
+                  <div className="tooltip">Svuota Carrello</div>
+                </div>
+                <div className="quick-action-btn" onClick={handleSaveAccount}>
+                  <Save className="h-6 w-6 text-gray-600" />
+                  <div className="tooltip">Salva Conto</div>
+                </div>
+                <div className="quick-action-btn" onClick={handleClearCart}>
+                  <RotateCcw className="h-6 w-6 text-gray-600" />
+                  <div className="tooltip">Reset</div>
+                </div>
+                <div className="quick-action-btn" onClick={handleSelectCustomer}>
+                  <UserSearch className="h-6 w-6 text-gray-600" />
+                  <div className="tooltip">Cliente</div>
+                </div>
+                <div className="quick-action-btn">
+                  <Store className="h-6 w-6 text-gray-600" />
+                  <div className="tooltip">Negozio</div>
+                </div>
               </div>
-            </Card>
+            </div>
             
-            <Card className="p-4 mt-4 shadow-sm border border-gray-100 rounded-lg">
+            <Card className="p-4 shadow-sm border border-gray-100 rounded-lg">
               <NewNumericKeypad onKeyPress={handleNumericKeyPress} />
             </Card>
           </div>

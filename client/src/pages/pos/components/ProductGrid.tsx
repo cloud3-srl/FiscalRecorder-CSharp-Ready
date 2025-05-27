@@ -69,6 +69,9 @@ export default function ProductGrid({ onProductSelect, onSearchChange }: Product
 
   return (
     <div className="space-y-4">
+      {/* Margine superiore per la ricerca */}
+      <div className="mt-6"></div>
+      
       <div className="flex gap-2">
         <Search className="w-5 h-5 text-muted-foreground" />
         <Input
@@ -79,7 +82,7 @@ export default function ProductGrid({ onProductSelect, onSearchChange }: Product
             setSearch(e.target.value);
             onSearchChange(e.target.value); // Notifica il cambiamento
           }}
-          className="flex-1 focus:border-transparent focus:ring-0 focus:shadow-[0_0_0_2px_rgba(34,197,94,0.3)] focus:shadow-green-500/30 transition-shadow duration-200"
+          className="flex-1 search-input-enhanced focus:border-transparent focus:ring-0 transition-all duration-300"
           autoFocus
         />
       </div>

@@ -66,7 +66,7 @@ export const useOfflineSync = () => {
             }),
           });
 
-          if (response.ok) {
+          if (response.ok && pendingSale.id) {
             await removePendingSale(pendingSale.id);
             queryClient.invalidateQueries({ queryKey: ['/api/sales'] });
           }
@@ -118,4 +118,24 @@ export const useOfflineSync = () => {
     useOfflineProducts,
     syncData
   };
+};
+
+// Hook semplificato per controllare solo lo stato offline
+export const useOffline = () => {
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  return { isOffline };
 };

@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 import cn from 'classnames';
 import { useAuth, AuthProvider } from './contexts/AuthContext';
+import { DevModeProvider } from './contexts/DevModeContext';
+import DevModeToggle from './components/DevModeToggle';
 
 // Importa i componenti delle impostazioni
 import CompanySettings from "@/pages/settings/components/CompanySettings";
@@ -254,9 +256,12 @@ function AppNavigation() {
         {!isMenuCollapsed && (
           <div className="mt-auto space-y-2 p-4 border-t">
             {user && (<div className="text-xs text-muted-foreground px-1">Utente: {user.username}</div>)}
-            <Button variant="ghost" className="w-full justify-start text-sm" onClick={logout}>
-              <LogOut className="mr-2 h-4 w-4" />Logout
-            </Button>
+            <div className="flex items-center justify-between">
+              <Button variant="ghost" className="flex-1 justify-start text-sm" onClick={logout}>
+                <LogOut className="mr-2 h-4 w-4" />Logout
+              </Button>
+              <DevModeToggle />
+            </div>
             <div className="text-xs text-muted-foreground">Versione: 13.5.0 (942)</div>
           </div>
         )}
@@ -379,10 +384,12 @@ function AppNavigation() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Layout>
-        <AppNavigation />
-      </Layout>
-      <Toaster />
+      <DevModeProvider>
+        <Layout>
+          <AppNavigation />
+        </Layout>
+        <Toaster />
+      </DevModeProvider>
     </QueryClientProvider>
   );
 }

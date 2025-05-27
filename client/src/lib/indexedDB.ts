@@ -10,6 +10,7 @@ interface OfflineDB extends DBSchema {
   pendingSales: {
     key: number;
     value: {
+      id?: number;
       sale: Omit<Sale, 'id' | 'receiptNumber'>;
       items: Omit<SaleItem, 'id' | 'saleId'>[];
       createdAt: Date;
@@ -41,9 +42,9 @@ export const initDB = async () => {
 };
 
 // Singleton per l'istanza del database
-let dbPromise: Promise<ReturnType<typeof initDB>> | null = null;
+let dbPromise: ReturnType<typeof initDB> | null = null;
 
-export const getDB = () => {
+export const getDB = async () => {
   if (!dbPromise) {
     dbPromise = initDB();
   }

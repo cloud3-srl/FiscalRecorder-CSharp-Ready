@@ -30,10 +30,6 @@ export default function Cart({ items, setItems }: CartProps) {
     setItems(items.filter(item => item.product.id !== productId));
   };
 
-  const clearCart = () => {
-    setItems([]);
-  };
-
   const total = items.reduce(
     (sum, item) => sum + (parseFloat(item.product.price) * item.quantity),
     0
@@ -41,119 +37,72 @@ export default function Cart({ items, setItems }: CartProps) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Icone azioni sopra il totale - tutte in una riga */}
-      <div className="mb-4">
-        <div className="flex justify-center gap-4">
-          <div className="flex flex-col items-center">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-10 w-10 rounded-full"
-              onClick={clearCart}
-              disabled={items.length === 0}
-            >
-              <Trash2 className="h-5 w-5" />
-            </Button>
-            <span className="text-xs mt-1 text-center">Svuota</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-10 w-10 rounded-full"
-            >
-              <Save className="h-5 w-5" />
-            </Button>
-            <span className="text-xs mt-1 text-center">Salva</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-10 w-10 rounded-full"
-            >
-              <RotateCcw className="h-5 w-5" />
-            </Button>
-            <span className="text-xs mt-1 text-center">Pulisci</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-10 w-10 rounded-full"
-            >
-              <Users className="h-5 w-5" />
-            </Button>
-            <span className="text-xs mt-1 text-center">Cliente</span>
-          </div>
-          <div className="flex flex-col items-center">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-10 w-10 rounded-full"
-            >
-              <Store className="h-5 w-5" />
-            </Button>
-            <span className="text-xs mt-1 text-center">Negozio</span>
+      {/* Totale con effetto vetro azzurro - ridotto */}
+      <div className="relative mb-4">
+        <div className="glass-effect-blue rounded-lg p-4 border-2 border-blue-200 shadow-lg">
+          <div className="pulse-blue-border absolute inset-0 rounded-lg border-2 border-blue-400 opacity-50"></div>
+          <div className="flex justify-between items-center">
+            <span className="text-lg font-medium text-gray-700">Totale</span>
+            <span className="text-2xl font-bold text-blue-600">€{total.toFixed(2)}</span>
           </div>
         </div>
       </div>
 
-      {/* Totale */}
-      <div className="border-b pb-2 mb-2">
-        <div className="flex justify-between text-lg font-bold">
-          <span className="text-gray-700">Totale</span>
-          <span className="text-blue-600">€{total.toFixed(2)}</span>
-        </div>
-      </div>
+      {/* Spazio per cliente selezionato */}
+      <div className="h-4 mb-2"></div>
 
-      {/* Lista articoli scrollabile */}
-      <div className="overflow-y-auto flex-grow">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead className="text-xs font-semibold text-gray-600">Descrizione</TableHead>
-              <TableHead className="text-xs font-semibold text-gray-600 text-center w-[100px]">Qtà</TableHead>
-              <TableHead className="text-xs font-semibold text-gray-600 text-right">Prezzo</TableHead>
-              <TableHead className="text-xs font-semibold text-gray-600 text-right w-[40px]">Azioni</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {items.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground py-4">
-                  Il carrello è vuoto.
-                </TableCell>
+      {/* Lista articoli con effetto scontrino */}
+      <div className="flex-grow relative">
+        <div className="overflow-y-auto h-full bg-white rounded border">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-gray-50">
+                <TableHead className="text-xs font-semibold text-gray-600">Descrizione</TableHead>
+                <TableHead className="text-xs font-semibold text-gray-600 text-center w-[100px]">Qtà</TableHead>
+                <TableHead className="text-xs font-semibold text-gray-600 text-right">Prezzo</TableHead>
+                <TableHead className="text-xs font-semibold text-gray-600 text-right w-[40px]">Azioni</TableHead>
               </TableRow>
-            )}
-            {items.map(({ product, quantity }) => (
-              <TableRow key={product.id} className="hover:bg-blue-50 transition-colors">
-                <TableCell className="max-w-[150px] truncate text-sm">
-                  {product.name}
-                </TableCell>
-                <TableCell className="text-center">
-                  <div className="flex items-center justify-center gap-1">
-                    <Button size="icon" variant="outline" className="h-6 w-6 bg-gray-50 hover:bg-gray-100 border-gray-200" onClick={() => updateQuantity(product.id, -1)}>
-                      <Minus className="h-3 w-3 text-gray-600" />
+            </TableHeader>
+            <TableBody>
+              {items.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-muted-foreground py-4">
+                    Il carrello è vuoto.
+                  </TableCell>
+                </TableRow>
+              )}
+              {items.map(({ product, quantity }) => (
+                <TableRow key={product.id} className="hover:bg-blue-50 transition-colors">
+                  <TableCell className="max-w-[150px] truncate text-sm">
+                    {product.name}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <div className="flex items-center justify-center gap-1">
+                      <Button size="icon" variant="outline" className="h-6 w-6 bg-gray-50 hover:bg-gray-100 border-gray-200" onClick={() => updateQuantity(product.id, -1)}>
+                        <Minus className="h-3 w-3 text-gray-600" />
+                      </Button>
+                      <span className="w-8 text-center font-medium">{quantity}</span>
+                      <Button size="icon" variant="outline" className="h-6 w-6 bg-gray-50 hover:bg-gray-100 border-gray-200" onClick={() => updateQuantity(product.id, 1)}>
+                        <Plus className="h-3 w-3 text-gray-600" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right text-sm font-medium">
+                    €{parseFloat(product.price).toFixed(2)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button size="icon" variant="ghost" className="h-6 w-6 text-red-500 hover:bg-red-100" onClick={() => removeItem(product.id)}>
+                      <Trash2 className="h-3 w-3" />
                     </Button>
-                    <span className="w-8 text-center font-medium">{quantity}</span>
-                    <Button size="icon" variant="outline" className="h-6 w-6 bg-gray-50 hover:bg-gray-100 border-gray-200" onClick={() => updateQuantity(product.id, 1)}>
-                      <Plus className="h-3 w-3 text-gray-600" />
-                    </Button>
-                  </div>
-                </TableCell>
-                <TableCell className="text-right text-sm font-medium">
-                  €{parseFloat(product.price).toFixed(2)}
-                </TableCell>
-                <TableCell className="text-right">
-                  <Button size="icon" variant="ghost" className="h-6 w-6 text-red-500 hover:bg-red-100" onClick={() => removeItem(product.id)}>
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+        
+        {/* Tratteggio scontrino in basso */}
+        <div className="receipt-bottom-border mt-4"></div>
       </div>
     </div>
   );
