@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Progress } from "@/components/ui/progress";
 import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query"; // Importa useQueryClient
-import { AlertCircle, CheckCircle2, RefreshCw, Play, Settings2, ListChecks, Users } from "lucide-react"; 
+import { AlertCircle, CheckCircle2, RefreshCw, Play, Settings2, ListChecks, Users, CreditCard } from "lucide-react"; 
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
@@ -30,6 +30,7 @@ const initialSyncStatus: SyncStatus = {
 export default function DbSyncPage() {
   const [productsSyncStatus, setProductsSyncStatus] = useState<SyncStatus>(initialSyncStatus);
   const [customersSyncStatus, setCustomersSyncStatus] = useState<SyncStatus>(initialSyncStatus);
+  const [paymentMethodsSyncStatus, setPaymentMethodsSyncStatus] = useState<SyncStatus>(initialSyncStatus);
   const queryClient = useQueryClient(); // Inizializza queryClient
 
   // TODO: Funzioni per recuperare lo stato attuale della sync dal backend (es. da databaseConfigs)
@@ -50,15 +51,18 @@ export default function DbSyncPage() {
         // Assumiamo che lastSync si applichi a entrambi per ora, o che serva un campo per tipo
         setCustomersSyncStatus(prev => ({ ...prev, lastSync: lastSyncDate, statusMessage: "Pronto", isSyncing: false, progress: 0 }));
         setProductsSyncStatus(prev => ({ ...prev, lastSync: lastSyncDate, statusMessage: "Pronto", isSyncing: false, progress: 0 })); // TODO: distinguere lastSync per tipo
+        setPaymentMethodsSyncStatus(prev => ({ ...prev, lastSync: lastSyncDate, statusMessage: "Pronto", isSyncing: false, progress: 0 }));
       } else {
         console.log("Nessuna active config con lastSync trovata."); //DEBUG
         setCustomersSyncStatus(prev => ({ ...prev, lastSync: null, statusMessage: "Pronto"}));
         setProductsSyncStatus(prev => ({ ...prev, lastSync: null, statusMessage: "Pronto"}));
+        setPaymentMethodsSyncStatus(prev => ({ ...prev, lastSync: null, statusMessage: "Pronto"}));
       }
     } catch (error) {
       console.error("Errore nel recuperare lo stato della sync:", error);
       setCustomersSyncStatus(prev => ({ ...prev, lastSync: null, statusMessage: "Errore caricamento stato"}));
       setProductsSyncStatus(prev => ({ ...prev, lastSync: null, statusMessage: "Errore caricamento stato"}));
+      setPaymentMethodsSyncStatus(prev => ({ ...prev, lastSync: null, statusMessage: "Errore caricamento stato"}));
     }
   };
 
@@ -66,15 +70,19 @@ export default function DbSyncPage() {
     fetchSyncStatus();
   }, []);
 
-  const handleManualSync = async (type: 'products' | 'customers') => {
-    const setStatus = type === 'products' ? setProductsSyncStatus : setCustomersSyncStatus;
-    const endpoint = type === 'products' ? '/api/admin/sync/products-now' : '/api/admin/sync/customers-now'; // TODO: creare endpoint per prodotti
+  const handleManualSync = async (type: 'products' | 'customers' | 'payment-methods') => {
+    const setStatus = type === 'products' ? setProductsSyncStatus : 
+                     type === 'customers' ? setCustomersSyncStatus : 
+                     setPaymentMethodsSyncStatus;
+    const endpoint = type === 'products' ? '/api/admin/sync/products-now' : 
+                     type === 'customers' ? '/api/admin/sync/customers-now' :
+                     '/api/admin/sync/payment-methods-now';
 
     setStatus(prev => ({ ...prev, isSyncing: true, progress: 0, statusMessage: "Avvio sincronizzazione...", error: null }));
 
     try {
-      // Per ora, solo i clienti hanno un endpoint reale
-      if (type === 'customers') {
+      // Per customers e payment-methods abbiamo endpoint reali
+      if (type === 'customers' || type === 'payment-methods') {
         const response = await fetch(endpoint, { method: 'POST' });
         const result = await response.json();
 
@@ -83,11 +91,11 @@ export default function DbSyncPage() {
             ...prev, 
             isSyncing: false, 
             progress: 100, 
-            statusMessage: `${result.message || "Sincronizzazione completata!"} (Aggiornati: ${result.updatedCount || 0}, Importati: ${result.importedCount || 0})`, 
+            statusMessage: `${result.message || "Sincronizzazione completata!"} (Aggiornati: ${result.data?.updatedCount || 0}, Importati: ${result.data?.importedCount || 0})`, 
             lastSync: new Date().toLocaleString(), 
             error: null 
           }));
-          console.log("Risultato sync clienti:", result);
+          console.log(`Risultato sync ${type}:`, result);
           // Invalida la query delle configurazioni DB per forzare il refetch di lastSync
           queryClient.invalidateQueries({ queryKey: ['databaseConfigs'] }); 
           fetchSyncStatus(); // Richiama per aggiornare la UI immediatamente se possibile
@@ -126,6 +134,7 @@ export default function DbSyncPage() {
   // TODO: UI e logica per la pianificazione
   const [isProductsSyncScheduled, setIsProductsSyncScheduled] = useState(false);
   const [isCustomersSyncScheduled, setIsCustomersSyncScheduled] = useState(false);
+  const [isPaymentMethodsSyncScheduled, setIsPaymentMethodsSyncScheduled] = useState(false);
 
 
   return (
@@ -137,7 +146,7 @@ export default function DbSyncPage() {
         </p>
       </PageHeader>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {/* Card Sincronizzazione Articoli */}
         <Card>
           <CardHeader>
@@ -234,6 +243,56 @@ export default function DbSyncPage() {
             <Button onClick={() => handleManualSync('customers')} disabled={customersSyncStatus.isSyncing}>
               <RefreshCw className={`mr-2 h-4 w-4 ${customersSyncStatus.isSyncing ? 'animate-spin' : ''}`} />
               Sincronizza Clienti Ora
+            </Button>
+          </CardFooter>
+        </Card>
+
+        {/* Card Sincronizzazione Codici di Pagamento */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <CreditCard className="mr-2 h-5 w-5" />
+              Sincronizzazione Codici di Pagamento
+            </CardTitle>
+            <CardDescription>
+              Stato e gestione della sincronizzazione per i codici di pagamento.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <p className="text-sm font-medium">Ultima Sincronizzazione:</p>
+              <p className="text-sm text-muted-foreground">{paymentMethodsSyncStatus.lastSync || "Mai eseguita"}</p>
+            </div>
+            <div>
+              <p className="text-sm font-medium">Prossima Sincronizzazione Pianificata:</p>
+              <p className="text-sm text-muted-foreground">{paymentMethodsSyncStatus.nextScheduledSync || "Non pianificata"}</p>
+            </div>
+            {paymentMethodsSyncStatus.isSyncing && (
+              <div className="space-y-1">
+                <Progress value={paymentMethodsSyncStatus.progress} className="w-full" />
+                <p className="text-xs text-muted-foreground">{paymentMethodsSyncStatus.statusMessage}</p>
+              </div>
+            )}
+             {!paymentMethodsSyncStatus.isSyncing && paymentMethodsSyncStatus.statusMessage !== "Pronto" && (
+              <div className={`flex items-center text-xs ${paymentMethodsSyncStatus.error ? 'text-red-500' : 'text-green-500'}`}>
+                {paymentMethodsSyncStatus.error ? <AlertCircle className="mr-1 h-4 w-4" /> : <CheckCircle2 className="mr-1 h-4 w-4" />}
+                {paymentMethodsSyncStatus.statusMessage}
+              </div>
+            )}
+          </CardContent>
+          <CardFooter className="flex flex-col items-start space-y-4">
+            <div className="flex items-center space-x-2">
+                <Switch 
+                  id="schedule-payment-methods-sync" 
+                  checked={isPaymentMethodsSyncScheduled} 
+                  onCheckedChange={setIsPaymentMethodsSyncScheduled}
+                  disabled // TODO: Abilitare quando la logica di pianificazione è pronta
+                />
+                <Label htmlFor="schedule-payment-methods-sync">Pianifica Sincronizzazione Automatica</Label>
+            </div>
+            <Button onClick={() => handleManualSync('payment-methods')} disabled={paymentMethodsSyncStatus.isSyncing}>
+              <RefreshCw className={`mr-2 h-4 w-4 ${paymentMethodsSyncStatus.isSyncing ? 'animate-spin' : ''}`} />
+              Sincronizza Codici di Pagamento Ora
             </Button>
           </CardFooter>
         </Card>

@@ -1,146 +1,284 @@
-import { useState } from "react";
+import React, { useState, useEffect, ReactNode } from "react";
 import { Switch, Route, Link, useLocation } from "wouter";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
-import { Layout } from "@/components/ui/layout"; // Questo Layout verrà modificato
+import { Layout } from "@/components/ui/layout";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import POS from "@/pages/pos";
 import AdminPage from "@/pages/admin";
 import DatabaseConfigPage from "@/pages/admin/database";
 import ReportPage from "@/pages/report";
-import CustomersPage from "@/pages/customers"; // Nuova importazione
-import DbSyncPage from "@/pages/admin/db-sync"; // Importa la nuova pagina
+import CustomersPage from "@/pages/customers"; 
+import SettingsPage from "@/pages/settings";
 import NotFound from "@/pages/not-found";
 import { 
-  Home, Settings, Database, FileText, Menu, Briefcase, Users, FileClock, Star, Wallet, HelpCircle, Megaphone, BarChart3, FileArchive, Building2 
+  Home, Settings, Database, FileText, Menu, Briefcase, Users, FileClock, Star, LogOut,
+  HelpCircle, Megaphone, BarChart3, FileArchive, Building2,
+  Warehouse, ShoppingCart, CreditCard, Printer, ScanLine, Tv, UserCog, 
+  SlidersHorizontal, UploadCloud, Palette
 } from "lucide-react";
 import cn from 'classnames';
+import { useAuth, AuthProvider } from './contexts/AuthContext';
 
-// Placeholder per il logo, da sostituire con il vero logo se disponibile
-const Logo = () => (
-  <div className="flex items-center space-x-2">
-    <Briefcase className="h-6 w-6 text-primary" /> {/* Icona temporanea */}
-    <span className="font-bold text-lg">Cassa in Cloud</span>
-  </div>
-);
+// Importa i componenti delle impostazioni
+import CompanySettings from "@/pages/settings/components/CompanySettings";
+import DepartmentsSettings from "@/pages/settings/components/DepartmentsSettings";
+import CategoriesSettings from "@/pages/settings/components/CategoriesSettings";
+import ProductsSettings from "@/pages/settings/components/ProductsSettings";
+import PaymentsSettings from "@/pages/settings/components/PaymentsSettings";
+import {
+  SaleModesSettings,
+  PrintersSettings,
+  BarcodeReadersSettings,
+  ClientDisplaySettings,
+  RolesSettings,
+  OperatorsSettings,
+  DocumentsSettings,
+  OrdersSettings,
+  GeneralSettings,
+  ImportSettings,
+} from "@/pages/settings/components/RemainingComponents";
+
+// Hook e Componente Logo
+function useAppLogo() {
+  const { data } = useQuery<{ general_settings_logo?: { appLogoBase64?: string | null } } | null, Error>({
+    queryKey: ['appLogoConfig'],
+    queryFn: async () => {
+      const response = await fetch('/api/settings/general-config');
+      if (!response.ok) throw new Error('Impossibile caricare la configurazione del logo');
+      const result = await response.json();
+      return result.success ? result.data : null;
+    },
+    select: (data) => ({ general_settings_logo: data?.general_settings_logo })
+  });
+  return data?.general_settings_logo?.appLogoBase64 || null;
+}
+
+const Logo = () => {
+  const appLogoBase64 = useAppLogo();
+  if (appLogoBase64) {
+    return <img src={appLogoBase64} alt="App Logo" className="h-10 object-contain" />;
+  }
+  return (
+    <div className="flex items-center space-x-2">
+      <Briefcase className="h-6 w-6 text-primary" />
+      <span className="font-bold text-lg">CLOUD3pOS</span>
+    </div>
+  );
+};
 
 const navItems = [
-  { href: "/reports", label: "Report", icon: BarChart3 }, // Modificato da /report e icona
+  { href: "/", label: "POS", icon: Home },
+  { href: "/reports", label: "Report", icon: BarChart3 },
   { href: "/documents", label: "Documenti", icon: FileArchive },
-  // { href: "/companies", label: "Aziende", icon: Building2 }, // Rimosso come da richiesta
   { href: "/customers", label: "Clienti", icon: Users },
   { href: "/deferred-invoices", label: "Fattura differita", icon: FileClock },
   { href: "/fidelity", label: "Fidelity", icon: Star },
-  // { href: "/ts-wallet", label: "TS Wallet", icon: Wallet }, // Rimosso come da screenshot
-  { 
-    href: "/settings", // Questo potrebbe diventare un gruppo o una pagina indice per le impostazioni
-    label: "Impostazioni", 
-    icon: Settings 
-  }, 
-  // Aggiungo Db Sync come sotto-voce o voce separata. Per ora, come voce separata che punta ad admin.
-  // L'utente ha detto "sotto-voce del tab 'impostazioni' Chiamata 'Db Sync' che richiama la pagina sotto admin/database"
-  // Questo suggerisce che /admin/database potrebbe avere più tab.
-  // Per ora, creo una route distinta /admin/db-sync per la pagina di sincronizzazione.
-  // E una voce di menu "Db Sync" che potrebbe essere raggruppata sotto Impostazioni in futuro.
-  // Per semplicità, la aggiungo come voce di primo livello per ora, o subito dopo Impostazioni.
-  // Decido di metterla logicamente vicino a Database Config, quindi sotto Impostazioni.
-  // { href: "/admin", label: "Admin Generale", icon: Settings }, // Se /settings diventa un indice
-  { href: "/admin/database", label: "Config. DB", icon: Database }, // Già esistente in routes, ma non in navItems
-  { href: "/admin/db-sync", label: "Db Sync", icon: FileClock }, // Nuova voce per la sincronizzazione
+  { href: "/admin/database", label: "Database e Sync", icon: Database },
+  { href: "/settings", label: "Impostazioni", icon: Settings }, 
   { href: "/help-center", label: "Centro assistenza", icon: HelpCircle },
   { href: "/news", label: "News e Comunicazioni", icon: Megaphone },
 ];
 
-// Le route attuali, da aggiornare se necessario per le nuove pagine
-const routes = [
-  { path: "/", component: POS, label: "POS", icon: Home }, 
-  { path: "/admin", component: AdminPage, label: "Admin", icon: Settings }, // Pagina Admin generale
-  { path: "/admin/database", component: DatabaseConfigPage, label: "Config. DB", icon: Database },
-  { path: "/admin/db-sync", component: DbSyncPage, label: "Db Sync", icon: FileClock }, // Decommentata e aggiunta route
-  { path: "/reports", component: ReportPage, label: "Report", icon: BarChart3 }, 
-  { path: "/customers", component: CustomersPage, label: "Clienti", icon: Users }, 
-  // Aggiungere qui le altre route per le nuove pagine del menu laterale quando verranno create
-  // Esempio: { path: "/documents", component: DocumentsPage, label: "Documenti", icon: FileArchive },
-  // La route /settings potrebbe puntare a AdminPage o a una pagina indice delle impostazioni
-  { path: "/settings", component: AdminPage, label: "Impostazioni", icon: Settings }, 
+// Menu delle impostazioni che si sovrappone al menu principale
+const settingsNavItems = [
+  { href: "/", label: "Torna al POS", icon: Home },
+  { href: "/settings/company", label: "Ragione sociale", icon: Building2, section: "AZIENDA E FISCALITÀ" },
+  { href: "/settings/departments", label: "Reparti", icon: Palette, section: "CATALOGO" },
+  { href: "/settings/categories", label: "Categorie", icon: Briefcase, section: "CATALOGO" },
+  { href: "/settings/products", label: "Prodotti", icon: ShoppingCart, section: "CATALOGO" },
+  { href: "/settings/sale-modes", label: "Modalità di vendita", icon: ShoppingCart, section: "OPERATIVITÀ CASSA" },
+  { href: "/settings/documents", label: "Documenti", icon: FileText, section: "OPERATIVITÀ CASSA" },
+  { href: "/settings/payments", label: "Pagamenti", icon: CreditCard, section: "OPERATIVITÀ CASSA" },
+  { href: "/settings/orders", label: "Ordini", icon: ShoppingCart, section: "OPERATIVITÀ CASSA" },
+  { href: "/settings/printers", label: "Stampanti", icon: Printer, section: "HARDWARE E DISPOSITIVI" },
+  { href: "/settings/barcode-readers", label: "Lettori barcode", icon: ScanLine, section: "HARDWARE E DISPOSITIVI" },
+  { href: "/settings/client-display", label: "Display cliente", icon: Tv, section: "HARDWARE E DISPOSITIVI" },
+  { href: "/settings/roles", label: "Ruoli", icon: UserCog, section: "UTENTI E SICUREZZA" },
+  { href: "/settings/operators", label: "Operatori", icon: Users, section: "UTENTI E SICUREZZA" },
+  { href: "/settings/general", label: "Generali", icon: SlidersHorizontal, section: "CONFIGURAZIONE AVANZATA" },
+  { href: "/settings/import", label: "Importazione", icon: UploadCloud, section: "CONFIGURAZIONE AVANZATA" },
+  { href: "/admin/database", label: "Database e Sync", icon: Database, section: "CONFIGURAZIONE AVANZATA" },
 ];
 
+// Rotte principali dell'applicazione
+const appRoutes = [
+  { path: "/", component: POS }, 
+  { path: "/admin", component: AdminPage }, 
+  { path: "/admin/database", component: DatabaseConfigPage },
+  { path: "/reports", component: ReportPage }, 
+  { path: "/customers", component: CustomersPage }, 
+  { path: "/settings", component: SettingsPage }, 
+  { path: "/settings/:rest*", component: SettingsPage },
+];
+
+// Componente per mostrare il contenuto delle impostazioni basato sulla route
+const SettingsContent = ({ location }: { location: string }) => {
+  const path = location.split('/').pop();
+  
+  switch (path) {
+    case 'company':
+      return <CompanySettings />;
+    case 'departments':
+      return <DepartmentsSettings />;
+    case 'categories':
+      return <CategoriesSettings />;
+    case 'products':
+      return <ProductsSettings />;
+    case 'payments':
+      return <PaymentsSettings />;
+    case 'sale-modes':
+      return <SaleModesSettings />;
+    case 'printers':
+      return <PrintersSettings />;
+    case 'barcode-readers':
+      return <BarcodeReadersSettings />;
+    case 'client-display':
+      return <ClientDisplaySettings />;
+    case 'roles':
+      return <RolesSettings />;
+    case 'operators':
+      return <OperatorsSettings />;
+    case 'documents':
+      return <DocumentsSettings />;
+    case 'orders':
+      return <OrdersSettings />;
+    case 'general':
+      return <GeneralSettings />;
+    case 'import':
+      return <ImportSettings />;
+    case 'database':
+      return <DatabaseConfigPage />;
+    default:
+      return <CompanySettings />;
+  }
+};
 
 function AppNavigation() {
   const [location] = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
+  const { logout, user } = useAuth();
+
+  // Controlla se siamo in una pagina delle impostazioni
+  const isOnSettingsPage = location.startsWith('/settings') || location.startsWith('/admin');
+
+  // Mantieni il menu delle impostazioni aperto quando si è nelle pagine delle impostazioni
+  useEffect(() => {
+    if (isOnSettingsPage) {
+      setIsSettingsMenuOpen(true);
+    } else {
+      setIsSettingsMenuOpen(false);
+    }
+  }, [isOnSettingsPage]);
+
+  const handleSettingsClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsSettingsMenuOpen(true);
+  };
 
   return (
-    <>
-      {/* Header Rimosso */}
-      {/* 
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 items-center">
-          <div className="mr-4 md:flex">
-            <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden">
-                  <Menu className="h-6 w-6" />
-                  <span className="sr-only">Apri menu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="pr-0">
-                <Link href="/" onClick={() => setIsSidebarOpen(false)} className="flex items-center mb-6 ml-4">
-                  <Logo />
-                </Link>
-                <nav className="flex flex-col space-y-1">
-                  {navItems.map((item) => (
-                    <Link 
-                      key={item.label} 
-                      href={item.href} 
-                      onClick={() => setIsSidebarOpen(false)}
-                      className={cn(
-                        "flex items-center space-x-3 rounded-md px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                        location === item.href
-                          ? "bg-accent text-accent-foreground"
-                          : "text-muted-foreground"
-                      )}
-                    >
-                      <item.icon className="h-5 w-5" />
-                      <span>{item.label}</span>
-                    </Link>
-                  ))}
-                </nav>
-                <div className="absolute bottom-4 left-4 text-xs text-muted-foreground">
-                  Versione: 13.5.0 (942)
-                </div>
-              </SheetContent>
-            </Sheet>
-            <Link href="/" className="mr-6 flex items-center space-x-2 hidden md:flex">
-              <Logo />
-            </Link>
-          </div>
+    <div className="flex flex-1 h-screen"> 
+      <aside className="hidden md:flex md:flex-col md:w-64 border-r bg-background p-4 space-y-4 relative">
+        <div className="mb-4">
+          <Link href="/"><Logo /></Link>
         </div>
-      </header> 
-      */}
-
-      {/* Sidebar fissa per desktop e contenuto principale */}
-      {/* Il div contenitore ora deve gestire l'altezza se l'header è rimosso, 
-          o il Layout in App() deve essere modificato.
-          Per ora, assumo che il Layout gestisca l'altezza completa.
-          Se la sidebar mobile era attivata dall'header, quella funzionalità sarà persa.
-          Lo screenshot non mostra un header, quindi questa rimozione è coerente.
-      */}
-      <div className="flex flex-1 h-screen"> {/* Aggiunto h-screen per occupare tutta l'altezza */}
-        {/* Sidebar fissa per desktop */}
-        <aside className="hidden md:block md:w-64 border-r bg-background p-4 space-y-1">
-          <nav className="flex flex-col">
-            {navItems.map((item) => (
-              <Link 
-                key={item.label} 
-                href={item.href}
+        <nav className="flex flex-col flex-grow">
+          {navItems.map((item) => {
+            if (item.href === "/settings") {
+              return (
+                <button 
+                  key={item.label}
+                  onClick={handleSettingsClick}
+                  className={cn(
+                    "flex items-center space-x-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground text-left",
+                    isOnSettingsPage ? "bg-accent text-accent-foreground" : "text-muted-foreground"
+                  )}
+                >
+                  <item.icon className="h-5 w-5" />
+                  <span>{item.label}</span>
+                </button>
+              );
+            }
+            return (
+              <Link key={item.label} href={item.href}
                 className={cn(
                   "flex items-center space-x-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
-                  location === item.href
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground"
+                  location === item.href ? "bg-accent text-accent-foreground" : "text-muted-foreground"
+                )}
+              >
+                <item.icon className="h-5 w-5" />
+                <span>{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+        <div className="mt-auto space-y-2 pt-2 border-t">
+          {user && (<div className="text-xs text-muted-foreground px-1">Utente: {user.username}</div>)}
+          <Button variant="ghost" className="w-full justify-start text-sm" onClick={logout}>
+            <LogOut className="mr-2 h-4 w-4" />Logout
+          </Button>
+          <div className="text-xs text-muted-foreground">Versione: 13.5.0 (942)</div>
+        </div>
+
+        {/* Menu delle impostazioni sovrapposto - STABILE */}
+        {isSettingsMenuOpen && (
+          <div data-settings-menu className="absolute inset-0 bg-background border-r z-10 p-4 space-y-4 flex flex-col">
+            <div className="mb-4">
+              <Logo />
+            </div>
+            
+            <nav className="flex flex-col flex-grow space-y-1 overflow-y-auto">
+              {/* Torna al POS */}
+              <Link 
+                href="/"
+                className="flex items-center space-x-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground text-muted-foreground mb-4"
+              >
+                <Home className="h-5 w-5" />
+                <span>Torna al POS</span>
+              </Link>
+
+              {/* Lista delle voci delle impostazioni filtrate - NON chiudere menu al click */}
+              {settingsNavItems
+                .filter(item => item.href !== "/")
+                .map((item) => (
+                  <Link 
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "flex items-center space-x-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                      location === item.href ? "bg-accent text-accent-foreground" : "text-muted-foreground"
+                    )}
+                  >
+                    <item.icon className="h-5 w-5" />
+                    <span>{item.label}</span>
+                  </Link>
+                ))}
+            </nav>
+          </div>
+        )}
+      </aside>
+      
+      {/* Menu mobile */}
+      <Sheet open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
+        <SheetTrigger asChild>
+          <Button variant="ghost" size="icon" className="md:hidden fixed top-4 left-4 z-50">
+            <Menu className="h-6 w-6" />
+            <span className="sr-only">Apri menu</span>
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="pr-0 pt-8 flex flex-col">
+          <Link href="/" onClick={() => setIsSidebarOpen(false)} className="flex items-center mb-6 ml-4">
+            <Logo />
+          </Link>
+          <nav className="flex flex-col space-y-1 flex-grow">
+            {navItems.map((item) => (
+              <Link key={item.label} href={item.href} onClick={() => setIsSidebarOpen(false)}
+                className={cn(
+                  "flex items-center space-x-3 rounded-md px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground",
+                  location === item.href ? "bg-accent text-accent-foreground" : "text-muted-foreground"
                 )}
               >
                 <item.icon className="h-5 w-5" />
@@ -148,37 +286,39 @@ function AppNavigation() {
               </Link>
             ))}
           </nav>
-          <div className="absolute bottom-4 text-xs text-muted-foreground">
-            Versione: 13.5.0 (942)
+          <div className="p-4 mt-auto border-t space-y-2">
+            {user && (<div className="text-xs text-muted-foreground">Utente: {user.username}</div>)}
+            <Button variant="ghost" className="w-full justify-start text-sm" onClick={() => { logout(); setIsSidebarOpen(false); }}>
+              <LogOut className="mr-2 h-4 w-4" />Logout
+            </Button>
+            <div className="text-xs text-muted-foreground">Versione: 13.5.0 (942)</div>
           </div>
-        </aside>
-        
-        {/* Contenuto principale */}
-        <main className="flex-1 p-4 md:p-8 pt-6">
-          <AppRouter />
-        </main>
-      </div>
-    </>
-  );
-}
-
-function AppRouter() { // Rinominato da Router a AppRouter per evitare conflitti
-  return (
-    <Switch>
-      {routes.map(route => (
-        <Route key={route.path} path={route.path} component={route.component} />
-      ))}
-      {/* Aggiungere qui le route per le nuove pagine quando i componenti saranno creati */}
-      {/* Esempio: <Route path="/documents" component={DocumentsPage} /> */}
-      <Route component={NotFound} /> {/* Fallback per route non trovate */}
-    </Switch>
+        </SheetContent>
+      </Sheet>
+      
+      <main className="flex-1 p-4 md:p-8 pt-16 md:pt-6">
+        {/* Se il menu impostazioni è aperto, mostra il contenuto delle impostazioni */}
+        {isSettingsMenuOpen ? (
+          <SettingsContent location={location} />
+        ) : (
+          <Switch>
+            {appRoutes
+              .filter(route => !route.path.startsWith('/settings'))
+              .map(route => (
+                <Route key={route.path} path={route.path} component={route.component} />
+              ))}
+            <Route component={NotFound} />
+          </Switch>
+        )}
+      </main>
+    </div>
   );
 }
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Layout> {/* Layout ora wrappa solo AppNavigation e Toaster */}
+      <Layout>
         <AppNavigation />
       </Layout>
       <Toaster />

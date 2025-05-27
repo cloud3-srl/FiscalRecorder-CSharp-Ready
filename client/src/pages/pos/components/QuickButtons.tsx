@@ -96,8 +96,8 @@ export default function QuickButtons({ onProductSelect }: QuickButtonsProps) {
     }
   });
 
-  // Crea una griglia 4x4 di posizioni
-  const gridPositions = Array.from({ length: 16 }, (_, i) => i + 1);
+  // Crea una griglia 4x6 di posizioni (24 pulsanti)
+  const gridPositions = Array.from({ length: 24 }, (_, i) => i + 1);
 
   if (isLoadingButtons) {
     return (
@@ -152,7 +152,7 @@ export default function QuickButtons({ onProductSelect }: QuickButtonsProps) {
         "p-4 rounded-lg"
       )}>
         {gridPositions.map(position => {
-          const adjustedPosition = selectedTab === "2" ? position + 16 : selectedTab === "3" ? position + 32 : position;
+          const adjustedPosition = selectedTab === "2" ? position + 24 : selectedTab === "3" ? position + 48 : position;
           const button = quickButtons?.find(b => b.position === adjustedPosition);
 
           return (

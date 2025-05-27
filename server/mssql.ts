@@ -1,28 +1,30 @@
 import mssql from 'mssql';
-import { DatabaseConfig, customers as customersTable, ExternalCustomer } from '@shared/schema'; // Aggiunto customersTable e ExternalCustomer
-import { db } from './db'; // Corretto il percorso di import per db
+import { DatabaseConfig, customers as customersTable, ExternalCustomer, products as productsTable, paymentMethods as paymentMethodsTable } from '@shared/schema';
+import * as schema from '@shared/schema'; 
+import { db } from './db'; 
 import { eq } from 'drizzle-orm';
 
 // Funzione per creare una connessione al database MSSQL
-export async function createMssqlConnection(config: DatabaseConfig): Promise<mssql.ConnectionPool> {
-  const sqlConfig = {
+export async function createMssqlConnection(config: Pick<DatabaseConfig, 'username' | 'password' | 'server' | 'database' | 'driver'>): Promise<mssql.ConnectionPool> {
+  const sqlConfig: mssql.config = { // Aggiunto tipo esplicito per sqlConfig
     user: config.username,
     password: config.password,
     server: config.server,
     database: config.database,
+    driver: config.driver, // Aggiunto driver se necessario per mssql.connect
     options: {
-      encrypt: true, // Per Azure
-      trustServerCertificate: true, // Per server locali / sviluppo
+      encrypt: true, 
+      trustServerCertificate: true, 
       enableArithAbort: true
     },
-    connectionTimeout: 30000, // 30 secondi
-    requestTimeout: 30000 // 30 secondi
+    connectionTimeout: 30000, 
+    requestTimeout: 30000 
   };
 
   try {
-    console.log(`Tentativo di connessione a ${config.server}/${config.database} con utente ${config.username}`);
+    // console.log(`Tentativo di connessione a ${config.server}/${config.database} con utente ${config.username}`);
     const pool = await mssql.connect(sqlConfig);
-    console.log('Connessione MSSQL stabilita con successo');
+    // console.log('Connessione MSSQL stabilita con successo');
     return pool;
   } catch (err) {
     console.error('Errore nella connessione al database MSSQL:', err);
@@ -30,74 +32,49 @@ export async function createMssqlConnection(config: DatabaseConfig): Promise<mss
   }
 }
 
-// Funzione per recuperare i clienti dalla tabella specifica (es. SCARLCONTI)
-export async function getCustomers(config: DatabaseConfig, companyCode: string): Promise<any[]> { // Dovrebbe restituire Promise<ExternalCustomer[]>
-  // Correggi la password se necessario
+// Funzione per recuperare i clienti dalla tabella specifica
+export async function getCustomers(config: DatabaseConfig, companyCode: string, customerTableNamePattern?: string): Promise<ExternalCustomer[]> {
   if (config.username === 'sa' && config.password === '!Nuvola3') {
     config = { ...config, password: 'Nuvola3' };
-    console.log('Password corretta per l\'utente sa durante getCustomers');
   }
-
-  const tableName = `${companyCode}CONTI`;
-  // Seleziona solo i campi di interesse e applica il filtro
+  let actualCustomerTableName: string;
+  if (customerTableNamePattern) {
+    actualCustomerTableName = customerTableNamePattern.replace('{companyCode}', companyCode);
+  } else {
+    actualCustomerTableName = `${companyCode}CONTI`; 
+  }
   const query = `
-    SELECT 
-      ANCODICE, ANDESCRI, ANPARIVA, ANCODFIS, ANCODEST, 
-      ANINDIRI, ANLOCALI, ANPROVIN, ANNAZION, ANCODPAG 
-    FROM ${tableName} 
-    WHERE ANTIPCON = 'C'
-  `;
-
+    SELECT ANCODICE, ANDESCRI, ANPARIVA, ANCODFIS, ANCODEST, ANINDIRI, ANLOCALI, ANPROVIN, ANNAZION, ANCODPAG 
+    FROM ${actualCustomerTableName} WHERE ANTIPCON = 'C'`;
   try {
     const result = await executeMssqlQuery(config, query);
-    
-    // Trasforma i dati nel formato ExternalCustomer
-    // Nota: i nomi dei campi nel DB MSSQL potrebbero non essere case-sensitive o potrebbero tornare in maiuscolo.
-    // Assicurati che il mapping corrisponda a come vengono restituiti da executeMssqlQuery.
-    // executeMssqlQuery restituisce le chiavi così come sono nel recordset.
-    const customers = result.rows.map((row: any) => ({
-      ANCODICE: row.ANCODICE?.trim(),
-      ANDESCRI: row.ANDESCRI?.trim(),
-      ANPARIVA: row.ANPARIVA?.trim(),
-      ANCODFIS: row.ANCODFIS?.trim(),
-      ANCODEST: row.ANCODEST?.trim(), // Corretto da ANCODDES
-      ANINDIRI: row.ANINDIRI?.trim(),
-      ANLOCALI: row.ANLOCALI?.trim(),
-      ANPROVIN: row.ANPROVIN?.trim(),
-      ANNAZION: row.ANNAZION?.trim(),
+    return result.rows.map((row: any) => ({
+      ANCODICE: row.ANCODICE?.trim(), ANDESCRI: row.ANDESCRI?.trim(), ANPARIVA: row.ANPARIVA?.trim(),
+      ANCODFIS: row.ANCODFIS?.trim(), ANCODEST: row.ANCODEST?.trim(), ANINDIRI: row.ANINDIRI?.trim(),
+      ANLOCALI: row.ANLOCALI?.trim(), ANPROVIN: row.ANPROVIN?.trim(), ANNAZION: row.ANNAZION?.trim(),
       ANCODPAG: row.ANCODPAG?.trim(),
     }));
-    
-    return customers;
   } catch (err) {
-    console.error(`Errore nel recuperare i clienti da ${tableName}:`, err);
-    throw err; // Rilancia l'errore per essere gestito dal chiamante (es. la rotta API)
+    console.error(`Errore nel recuperare i clienti da ${actualCustomerTableName}:`, err);
+    throw err;
   }
 }
 
 // Funzione per eseguire una query sul database MSSQL
 export async function executeMssqlQuery(config: DatabaseConfig, query: string, params: any[] = []): Promise<any> {
   let pool: mssql.ConnectionPool | null = null;
-  
   try {
     pool = await createMssqlConnection(config);
-    
-    // Sostituisci i parametri nella query
     let preparedQuery = query;
     if (params.length > 0) {
+      // Basic parameter substitution, consider mssql.Request for proper parameterization
       params.forEach((param, index) => {
-        preparedQuery = preparedQuery.replace(`$${index + 1}`, typeof param === 'string' ? `'${param}'` : param);
+        preparedQuery = preparedQuery.replace(`$${index + 1}`, typeof param === 'string' ? `'${param.replace(/'/g, "''")}'` : param);
       });
     }
-    
-    console.log(`Esecuzione query: ${preparedQuery.substring(0, 100)}${preparedQuery.length > 100 ? '...' : ''}`);
     const result = await pool.request().query(preparedQuery);
-    console.log(`Query eseguita con successo. Righe restituite: ${result.recordset ? result.recordset.length : 0}`);
-    
     return {
-      columns: result.recordset && result.recordset.length > 0 
-        ? Object.keys(result.recordset[0]) 
-        : [],
+      columns: result.recordset && result.recordset.length > 0 ? Object.keys(result.recordset[0]) : [],
       rows: result.recordset || [],
       rowCount: result.recordset ? result.recordset.length : 0,
       command: query.trim().split(' ')[0].toUpperCase()
@@ -106,206 +83,237 @@ export async function executeMssqlQuery(config: DatabaseConfig, query: string, p
     console.error('Errore nell\'esecuzione della query MSSQL:', err);
     throw err;
   } finally {
-    if (pool) {
-      try {
-        await pool.close();
-        console.log('Connessione MSSQL chiusa');
-      } catch (closeErr) {
-        console.error('Errore nella chiusura della connessione MSSQL:', closeErr);
-      }
-    }
+    if (pool) { try { await pool.close(); } catch (closeErr) { console.error('Errore chiusura connessione MSSQL:', closeErr); } }
   }
 }
 
-// Funzione per testare la connessione al database MSSQL
-export async function testMssqlConnection(config: DatabaseConfig): Promise<boolean> {
+// Tipo per i parametri necessari a testMssqlConnection
+type ConnectionTestParams = Pick<schema.DatabaseConfig, 'username' | 'password' | 'server' | 'database' | 'driver'>;
+
+export async function testMssqlConnection(config: ConnectionTestParams): Promise<boolean> {
   let pool: mssql.ConnectionPool | null = null;
-  
   try {
-    console.log(`Test connessione a ${config.server}/${config.database} con utente ${config.username}`);
-    pool = await createMssqlConnection(config);
-    console.log('Connessione stabilita, esecuzione query di test...');
+    // Ricostruisci un oggetto config parziale solo con i campi necessari per createMssqlConnection
+    const connectionConfig = {
+        username: config.username,
+        password: config.password,
+        server: config.server,
+        database: config.database,
+        driver: config.driver,
+        // Aggiungi altri campi di DatabaseConfig con valori fittizi se createMssqlConnection li richiede
+        // ma non sono in ConnectionTestParams e non sono usati per la connessione effettiva.
+        // Per ora, assumiamo che createMssqlConnection usi solo questi.
+        id: 0, name: '', options: {}, isActive: false, lastSync: null, createdAt: new Date() 
+    };
+    pool = await createMssqlConnection(connectionConfig);
     await pool.request().query('SELECT 1 AS test');
-    console.log('Test completato con successo');
     return true;
-  } catch (err) {
-    console.error('Errore nel test della connessione MSSQL:', err);
-    // Restituisci false invece di lanciare un'eccezione per gestire meglio l'errore nell'UI
-    return false;
-  } finally {
-    if (pool) {
-      try {
-        await pool.close();
-        console.log('Connessione MSSQL chiusa');
-      } catch (closeErr) {
-        console.error('Errore nella chiusura della connessione MSSQL:', closeErr);
-      }
-    }
+  } catch (err) { return false; } 
+  finally {
+    if (pool) { try { await pool.close(); } catch (closeErr) { /* ignore */ } }
   }
 }
 
-// Funzione per interrogare la tabella C3EXPPOS con i filtri specificati
-export async function queryC3EXPPOS(config: DatabaseConfig, codiceAzienda: string = 'SCARL'): Promise<any> {
-  // Correggi la password se necessario (per il caso specifico dell'utente 'sa')
+export async function queryC3EXPPOS(config: DatabaseConfig, codiceAzienda: string = 'SCARL', productTableName?: string ): Promise<any> {
   if (config.username === 'sa' && config.password === '!Nuvola3') {
     config = { ...config, password: 'Nuvola3' };
-    console.log('Password corretta per l\'utente sa');
   }
-  
-  const query = `SELECT * FROM C3EXPPOS WHERE EAIMPPOS='N' AND EACODAZI='${codiceAzienda}'`;
-  
+  const actualProductTableName = productTableName || 'C3EXPPOS';
+  const query = `SELECT * FROM ${actualProductTableName} WHERE EAIMPPOS='N' AND EACODAZI='${codiceAzienda}'`;
   try {
-    const result = await executeMssqlQuery(config, query);
-    return result;
+    return await executeMssqlQuery(config, query);
   } catch (err) {
-    console.error('Errore nella query C3EXPPOS:', err);
+    console.error(`Errore nella query ${actualProductTableName}:`, err);
     throw err;
   }
 }
 
-// Funzione per importare i prodotti dalla tabella C3EXPPOS
-export async function importProductsFromC3EXPPOS(config: DatabaseConfig, codiceAzienda: string = 'SCARL'): Promise<any[]> { // TODO: Restituire un tipo più specifico
-  // Correggi la password se necessario (per il caso specifico dell'utente 'sa')
+export async function importProductsFromExternalDb(
+  config: DatabaseConfig, 
+  codiceAzienda: string = 'SCARL',
+  productTableName?: string
+): Promise<{ success: boolean, importedCount: number, updatedCount: number, error?: string }> {
   if (config.username === 'sa' && config.password === '!Nuvola3') {
     config = { ...config, password: 'Nuvola3' };
-    console.log('Password corretta per l\'utente sa');
   }
-  
-  const query = `SELECT * FROM C3EXPPOS WHERE EAIMPPOS='N' AND EACODAZI='${codiceAzienda}'`;
-  
+  const actualProductTableName = productTableName || 'C3EXPPOS';
+  const query = `SELECT * FROM ${actualProductTableName} WHERE EAIMPPOS='N' AND EACODAZI='${codiceAzienda}'`;
   try {
     const result = await executeMssqlQuery(config, query);
-    
-    // Trasforma i dati nel formato richiesto dall'applicazione
-    const products = result.rows.map((row: any) => ({
-      code: row.EACODART.trim(),
-      name: row.EADESART?.trim() || row.EACODART.trim(), // Usa EADESART come nome, se disponibile
-      description: row.EADESART?.trim() || '',
-      price: row.EAPREZZO,
-      listCode: row.EACODLIS?.trim(),
-      activationDate: row.EA__DATA,
-      deactivationDate: null,
-      unitOfMeasure: row.EAUNIMIS?.trim(),
-      controlFlag: row.cpccchk?.trim(),
-      discount1: row.EASCONT1,
-      discount2: row.EASCONT2,
-      discount3: row.EASCONT3,
-      discount4: row.EASCONT4,
-      category: row.EACODFAM?.trim(),
-      inStock: 0
+    const externalProducts = result.rows.map((row: any) => ({
+      code: row.EACODART?.trim(),
+      name: row.EADESART?.trim() || row.EACODART?.trim(),
+      description: row.EADESART?.trim() || null,
+      barcode: row.EACODBAR?.trim() || null,
+      price: String(row.EAPREZZO ?? 0), 
+      vatRate: row.EAPERIVA ? String(row.EAPERIVA) : null,
+      listCode: row.EACODLIS?.trim() || null,
+      activationDate: row.EA__DATA ? new Date(row.EA__DATA) : null, 
+      deactivationDate: null, 
+      unitOfMeasure: row.EAUNIMIS?.trim() || null,
+      controlFlag: row.cpccchk?.trim() || null,
+      discount1: row.EASCONT1 ? String(row.EASCONT1) : null,
+      discount2: row.EASCONT2 ? String(row.EASCONT2) : null,
+      discount3: row.EASCONT3 ? String(row.EASCONT3) : null,
+      discount4: row.EASCONT4 ? String(row.EASCONT4) : null,
+      departmentCode: row.EACODREP?.trim() || null,
+      category: row.EACODFAM?.trim() || null, 
+      familyDescription: row.EADESFAM?.trim() || null,
+      homogeneousCategoryCode: row.EACATOMO?.trim() || null,
+      homogeneousCategoryDescription: row.EADESOMO?.trim() || null,
+      isLotManaged: (() => {
+        const eaflottVal = row.EAFLOTT;
+        if (typeof eaflottVal === 'string') {
+          const trimmedUpper = eaflottVal.trim().toUpperCase();
+          return trimmedUpper === 'S' || trimmedUpper === '1' || trimmedUpper === 'Y' || trimmedUpper === 'T' || trimmedUpper === 'TRUE';
+        } else if (typeof eaflottVal === 'number') { return eaflottVal === 1; }
+        else if (typeof eaflottVal === 'boolean') { return eaflottVal; }
+        return false;
+      })(),
+      inStock: 0 
+    }));
+    if (externalProducts.length === 0) return { success: true, importedCount: 0, updatedCount: 0, error: `Nessun prodotto in ${actualProductTableName}` };
+    for (const extProd of externalProducts) {
+      if (!extProd.code) { console.warn("Prodotto saltato per codice mancante:", extProd); continue; }
+      try {
+        // Rimuovi 'id' se presente in extProd prima dell'upsert, dato che è autogenerato
+        const { id, ...prodDataToUpsert } = extProd as any; // Cast to any to allow deleting id
+        await db.insert(productsTable).values(prodDataToUpsert)
+          .onConflictDoUpdate({ target: productsTable.code, set: { ...prodDataToUpsert, code: undefined } }); // code non va aggiornato nel set di onConflict
+      } catch (upsertError) { console.error(`Errore upsert prodotto ${extProd.code}:`, upsertError); }
+    }
+    return { success: true, importedCount: 0, updatedCount: externalProducts.length }; // Conteggio semplificato
+  } catch (err) {
+    console.error(`Errore import prodotti da ${actualProductTableName}:`, err);
+    return { success: false, importedCount: 0, updatedCount: 0, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+export async function importExternalCustomersToLocalDb(
+  mssqlConfig: DatabaseConfig, 
+  companyCode: string,
+  customerTableNamePattern?: string
+): Promise<{ success: boolean, importedCount: number, updatedCount: number, error?: string }> {
+  if (mssqlConfig.username === 'sa' && mssqlConfig.password === '!Nuvola3') {
+    mssqlConfig = { ...mssqlConfig, password: 'Nuvola3' };
+  }
+  let actualCustomerTableName: string;
+  if (customerTableNamePattern) {
+    actualCustomerTableName = customerTableNamePattern.replace('{companyCode}', companyCode);
+  } else {
+    actualCustomerTableName = `${companyCode}CONTI`;
+  }
+  const query = `SELECT ANCODICE, ANDESCRI, ANPARIVA, ANCODFIS, ANCODEST, ANINDIRI, ANLOCALI, ANPROVIN, ANNAZION, ANCODPAG 
+    FROM ${actualCustomerTableName} WHERE ANTIPCON = 'C'`;
+  try {
+    const result = await executeMssqlQuery(mssqlConfig, query);
+    const externalCustomers: ExternalCustomer[] = result.rows.map((row: any) => ({
+      ANCODICE: row.ANCODICE?.trim(), ANDESCRI: row.ANDESCRI?.trim(), ANPARIVA: row.ANPARIVA?.trim(),
+      ANCODFIS: row.ANCODFIS?.trim(), ANCODEST: row.ANCODEST?.trim(), ANINDIRI: row.ANINDIRI?.trim(),
+      ANLOCALI: row.ANLOCALI?.trim(), ANPROVIN: row.ANPROVIN?.trim(), ANNAZION: row.ANNAZION?.trim(),
+      ANCODPAG: row.ANCODPAG?.trim(),
+    }));
+    if (externalCustomers.length === 0) return { success: true, importedCount: 0, updatedCount: 0, error: `Nessun cliente in ${actualCustomerTableName}` };
+    for (const extCust of externalCustomers) {
+      if (!extCust.ANCODICE) { console.warn("Cliente saltato per codice mancante:", extCust); continue; }
+      const customerToUpsert = {
+        code: extCust.ANCODICE, name: extCust.ANDESCRI, fiscalCode: extCust.ANCODFIS || null,
+        vatNumber: extCust.ANPARIVA || null, address: extCust.ANINDIRI || null, city: extCust.ANLOCALI || null,
+        province: extCust.ANPROVIN || null, country: extCust.ANNAZION || null, sdiCode: extCust.ANCODEST || null,
+        paymentCode: extCust.ANCODPAG || null, lastSyncedFromExternalAt: new Date(),
+      };
+      try {
+        const { id, ...custDataToUpsert } = customerToUpsert as any;
+        await db.insert(customersTable).values(custDataToUpsert)
+          .onConflictDoUpdate({ target: customersTable.code, set: { ...custDataToUpsert, code: undefined, updatedAt: new Date() } });
+      } catch (upsertError) { console.error(`Errore upsert cliente ${extCust.ANCODICE}:`, upsertError); }
+    }
+    return { success: true, importedCount: 0, updatedCount: externalCustomers.length };
+  } catch (error) {
+    console.error(`Errore import clienti da ${actualCustomerTableName}:`, error);
+    return { success: false, importedCount: 0, updatedCount: 0, error: error instanceof Error ? error.message : String(error) };
+  }
+}
+
+export async function importPaymentMethodsFromExternalDb(
+  mssqlConfig: DatabaseConfig,
+  companyCode: string,
+  paymentMethodTableNamePattern?: string
+): Promise<{ success: boolean, importedCount: number, updatedCount: number, error?: string }> {
+  if (mssqlConfig.username === 'sa' && mssqlConfig.password === '!Nuvola3') {
+    mssqlConfig = { ...mssqlConfig, password: 'Nuvola3' };
+  }
+  
+  let actualPmTableName: string;
+  if (paymentMethodTableNamePattern) {
+    actualPmTableName = paymentMethodTableNamePattern.replace('{companyCode}', companyCode);
+  } else {
+    actualPmTableName = `${companyCode}PAG_AMEN`;
+  }
+  
+  const query = `
+    SELECT 
+        PACODICE,              -- Codice pagamento
+        PADESCRI            -- Descrizione pagamento
+
+    FROM ${actualPmTableName}
+    ORDER BY PACODICE;
+  `;
+  try {
+    const result = await executeMssqlQuery(mssqlConfig, query);
+    const externalPaymentMethods = result.rows.map((row: any) => ({
+      code: row.PACODICE?.trim(), 
+      description: row.PADESCRI?.trim(),
     }));
     
-    return products;
-  } catch (err) {
-    console.error('Errore nell\'importazione dei prodotti da C3EXPPOS:', err);
-    throw err;
-  }
-}
-
-// Nuova funzione per importare i clienti da MSSQL al DB locale PostgreSQL
-export async function importExternalCustomersToLocalDb(mssqlConfig: DatabaseConfig, companyCode: string): Promise<{ success: boolean, importedCount: number, updatedCount: number, error?: string }> {
-  let importedCount = 0;
-  let updatedCount = 0;
-  try {
-    console.log(`Avvio importazione clienti da MSSQL per azienda ${companyCode} a DB locale.`);
-    const externalCustomers: ExternalCustomer[] = await getCustomers(mssqlConfig, companyCode);
-    console.log(`Recuperati ${externalCustomers.length} clienti da MSSQL.`);
-
-    if (externalCustomers.length === 0) {
-      return { success: true, importedCount: 0, updatedCount: 0, error: "Nessun cliente esterno trovato da importare." };
+    if (externalPaymentMethods.length === 0) {
+      return { success: true, importedCount: 0, updatedCount: 0, error: `Nessun metodo pagamento in ${actualPmTableName}` };
     }
-
-    for (const extCust of externalCustomers) {
-      const customerToUpsert = {
-        code: extCust.ANCODICE,
-        name: extCust.ANDESCRI,
-        fiscalCode: extCust.ANCODFIS || null,
-        vatNumber: extCust.ANPARIVA || null,
-        address: extCust.ANINDIRI || null,
-        city: extCust.ANLOCALI || null,
-        province: extCust.ANPROVIN || null,
-        country: extCust.ANNAZION || null,
-        sdiCode: extCust.ANCODEST || null,
-        paymentCode: extCust.ANCODPAG || null,
-        // email, phone, notes, points non sono in ExternalCustomer, quindi non li mappiamo qui
-        // o li impostiamo a null/default se necessario e se la tabella locale li richiede.
-        // Per ora, li lasciamo gestire dai default della tabella o rimangono invariati in caso di UPDATE.
-        lastSyncedFromExternalAt: new Date(),
-        // createdAt è gestito dal DB, updatedAt verrà aggiornato
+    
+    let processedCount = 0;
+    for (const extPm of externalPaymentMethods) {
+      if (!extPm.code || !extPm.description) { 
+        console.warn(`Record PM saltato:`, extPm); 
+        continue; 
+      }
+      
+      // Determina automaticamente il tipo in base alla descrizione
+      let type: schema.PaymentMethod['type'] = 'other';
+      const descLower = extPm.description.toLowerCase();
+      if (descLower.includes('contanti')) type = 'cash';
+      else if (descLower.includes('carta') || descLower.includes('pos') || descLower.includes('bancomat')) type = 'card';
+      else if (descLower.includes('digitale') || descLower.includes('satispay') || descLower.includes('paypal')) type = 'digital';
+      else if (descLower.includes('voucher') || descLower.includes('buono')) type = 'voucher';
+      
+      const paymentMethodToUpsert = { 
+        code: extPm.code, 
+        description: extPm.description, 
+        type: type, 
+        isActive: true,
+        details: {}
       };
-
+      
       try {
-        const result = await db.insert(customersTable)
-          .values(customerToUpsert)
-          .onConflictDoUpdate({
-            target: customersTable.code, // Colonna univoca per il conflitto
-            set: { // Campi da aggiornare in caso di conflitto
-              name: customerToUpsert.name,
-              fiscalCode: customerToUpsert.fiscalCode,
-              vatNumber: customerToUpsert.vatNumber,
-              address: customerToUpsert.address,
-              city: customerToUpsert.city,
-              province: customerToUpsert.province,
-              country: customerToUpsert.country,
-              sdiCode: customerToUpsert.sdiCode,
-              paymentCode: customerToUpsert.paymentCode,
-              lastSyncedFromExternalAt: customerToUpsert.lastSyncedFromExternalAt,
-              updatedAt: new Date(), // Aggiorna sempre updatedAt
-              // Non aggiorniamo email, phone, notes, points qui per non sovrascrivere dati inseriti localmente
-            }
-          })
-          .returning({ id: customersTable.id, code: customersTable.code, createdAt: customersTable.createdAt, updatedAt: customersTable.updatedAt }); // Aggiungo createdAt e updatedAt
-        
-        if (result && result.length > 0) {
-          const savedCustomer = result[0];
-          // Un modo semplice per distinguere (non perfetto a causa dei millisecondi e defaultNow):
-          // Se createdAt e updatedAt sono molto vicini (es. entro pochi ms), potrebbe essere un insert.
-          // Drizzle non fornisce un modo diretto per sapere se è stato un INSERT o un UPDATE da onConflictDoUpdate.
-          // Per un conteggio preciso, si potrebbe fare un SELECT prima, o usare una stored procedure.
-          // Per ora, contiamo tutti come "updated" se l'operazione ha successo.
-          // Se volessimo un conteggio più preciso, potremmo provare a selezionare il cliente prima.
-          
-          // Log più dettagliato
-          console.log(`Cliente ${savedCustomer.code} processato (ID: ${savedCustomer.id}).`);
-          // Per ora, non distinguiamo tra imported e updated qui, lo facciamo nel conteggio finale.
-        } else {
-          console.warn(`Nessun risultato ritornato per l'upsert del cliente ${extCust.ANCODICE}.`);
-        }
-      } catch (upsertError) {
-        console.error(`Errore durante l'upsert del cliente ${extCust.ANCODICE}:`, upsertError);
-        // Continua con il prossimo cliente
+        const { id, ...pmDataToUpsert } = paymentMethodToUpsert as any;
+        await db.insert(paymentMethodsTable).values(pmDataToUpsert)
+          .onConflictDoUpdate({ 
+            target: paymentMethodsTable.code, 
+            set: { ...pmDataToUpsert, code: undefined, updatedAt: new Date() } 
+          });
+        processedCount++;
+      } catch (upsertError) { 
+        console.error(`Errore upsert metodo pagamento ${extPm.code}:`, upsertError); 
       }
     }
     
-    // Conteggio più significativo: assumiamo che tutti i clienti recuperati siano stati "aggiornati" o "inseriti".
-    // Non abbiamo un modo semplice per distinguere con onConflictDoUpdate senza query aggiuntive.
-    // Per ora, updatedCount sarà il numero totale di clienti processati con successo.
-    // importedCount rimarrà 0 a meno che non implementiamo una logica di pre-selezione.
-    updatedCount = externalCustomers.length; // Numero di record tentati di upsertare.
-                                          // Se ci fossero errori individuali, questo conteggio sarebbe ancora il totale tentato.
-                                          // Un conteggio più accurato degli upsert riusciti richiederebbe di contare i successi nel loop.
-    
-    // Conteggio più accurato (sebbene ancora non distingua insert/update):
-    let successfulUpserts = 0;
-    for (const extCust of externalCustomers) {
-        // Qui si potrebbe ripetere l'operazione o, meglio, aver tracciato i successi nel loop precedente.
-        // Per semplicità, se arriviamo qui senza un errore fatale, assumiamo che il loop abbia tentato tutti.
-        // Il conteggio `updatedCount` già riflette il numero di clienti da MSSQL.
-        // Se volessimo contare solo quelli effettivamente scritti/aggiornati nel DB locale,
-        // dovremmo incrementare un contatore all'interno del blocco try del loop.
-    }
-    // Per ora, manteniamo updatedCount = externalCustomers.length come indicazione dei record processati.
-    // importedCount rimane 0.
-    // Rinominiamo per chiarezza: processedCount invece di updatedCount se non distinguiamo.
-    const processedCount = externalCustomers.length;
-
-    console.log(`Importazione/aggiornamento clienti completata. Tentativi di upsert per ${processedCount} clienti.`);
-    // Restituiamo processedCount come updatedCount, e importedCount come 0, come prima.
-    // Il frontend può mostrare "Processati: X"
-    return { success: true, importedCount: 0, updatedCount: processedCount }; 
-
+    return { success: true, importedCount: 0, updatedCount: processedCount };
   } catch (error) {
-    console.error('Errore generale durante l\'importazione dei clienti esterni nel DB locale:', error);
-    return { success: false, importedCount: 0, updatedCount: 0, error: error instanceof Error ? error.message : String(error) };
+    console.error(`Errore import metodi pagamento da ${actualPmTableName}:`, error);
+    return { 
+      success: false, 
+      importedCount: 0, 
+      updatedCount: 0, 
+      error: error instanceof Error ? error.message : String(error) 
+    };
   }
 }
