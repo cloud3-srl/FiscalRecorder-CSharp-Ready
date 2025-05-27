@@ -15,6 +15,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import "@/styles/pos.css";
 
 const companySchema = z.object({
   gruppo: z.string().optional(),
@@ -61,7 +62,7 @@ export default function CompanySettings() {
   };
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
+    <div className="fullscreen-form">
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Ragione sociale</h1>
         <p className="text-muted-foreground">
@@ -69,7 +70,7 @@ export default function CompanySettings() {
         </p>
       </div>
 
-      <Card>
+      <Card className="fullscreen-card">
         <CardHeader>
           <CardTitle>Informazioni Azienda</CardTitle>
           <CardDescription>
@@ -78,65 +79,163 @@ export default function CompanySettings() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Gruppo */}
-              <FormField
-                control={form.control}
-                name="gruppo"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Gruppo</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Nome del gruppo aziendale" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Ragione sociale */}
-              <FormField
-                control={form.control}
-                name="ragioneSociale"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Ragione sociale *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ragione sociale dell'azienda" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {/* Sezione Indirizzo */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Indirizzo</h3>
-                
-                <FormField
-                  control={form.control}
-                  name="via"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Via</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Via, Numero civico" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Gruppo campi affiancati */}
-                <div className="grid grid-cols-4 gap-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              
+              <div className="form-two-columns">
+                {/* COLONNA SINISTRA - Informazioni Azienda e Indirizzo */}
+                <div className="form-section">
+                  <h3 className="form-section-title">Informazioni Azienda</h3>
+                  
+                  {/* Gruppo */}
                   <FormField
                     control={form.control}
-                    name="cap"
+                    name="gruppo"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>CAP</FormLabel>
+                        <FormLabel>Gruppo</FormLabel>
                         <FormControl>
-                          <Input placeholder="12345" {...field} />
+                          <Input 
+                            placeholder="Nome del gruppo aziendale" 
+                            className="enhanced-input"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Ragione sociale */}
+                  <FormField
+                    control={form.control}
+                    name="ragioneSociale"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Ragione sociale *</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Ragione sociale dell'azienda" 
+                            className="enhanced-input"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <h3 className="form-section-title mt-6">Indirizzo</h3>
+                  
+                  <FormField
+                    control={form.control}
+                    name="via"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Via</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Via, Numero civico" 
+                            className="enhanced-input"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Gruppo campi indirizzo compatti */}
+                  <div className="input-group-compact">
+                    <FormField
+                      control={form.control}
+                      name="cap"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>CAP</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="12345" 
+                              className="enhanced-input"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="citta"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Città</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Città" 
+                              className="enhanced-input"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="provincia"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Prov.</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="XX" 
+                              className="enhanced-input"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="stato"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Stato</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Italia" 
+                              className="enhanced-input"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                {/* COLONNA DESTRA - Dati Fiscali e Contatti */}
+                <div className="form-section">
+                  <h3 className="form-section-title">Dati Fiscali</h3>
+                  
+                  <FormField
+                    control={form.control}
+                    name="partitaIva"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Partita IVA</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="12345678901" 
+                            className="enhanced-input"
+                            {...field} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -145,12 +244,36 @@ export default function CompanySettings() {
 
                   <FormField
                     control={form.control}
-                    name="citta"
+                    name="codiceFiscale"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Città</FormLabel>
+                        <FormLabel>Codice Fiscale</FormLabel>
                         <FormControl>
-                          <Input placeholder="Città" {...field} />
+                          <Input 
+                            placeholder="ABCDEF12G34H567I" 
+                            className="enhanced-input"
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <h3 className="form-section-title mt-6">Contatti</h3>
+                  
+                  <FormField
+                    control={form.control}
+                    name="telefono"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Telefono</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="+39 123 456 7890" 
+                            className="enhanced-input"
+                            {...field} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -159,26 +282,17 @@ export default function CompanySettings() {
 
                   <FormField
                     control={form.control}
-                    name="provincia"
+                    name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Prov.</FormLabel>
+                        <FormLabel>E-mail</FormLabel>
                         <FormControl>
-                          <Input placeholder="XX" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="stato"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Stato</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Italia" {...field} />
+                          <Input 
+                            placeholder="info@azienda.it" 
+                            type="email" 
+                            className="enhanced-input"
+                            {...field} 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -187,76 +301,10 @@ export default function CompanySettings() {
                 </div>
               </div>
 
-              {/* Dati fiscali */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Dati Fiscali</h3>
-                
-                <FormField
-                  control={form.control}
-                  name="partitaIva"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Partita IVA</FormLabel>
-                      <FormControl>
-                        <Input placeholder="12345678901" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="codiceFiscale"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Codice Fiscale</FormLabel>
-                      <FormControl>
-                        <Input placeholder="ABCDEF12G34H567I" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Contatti */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Contatti</h3>
-                
-                <FormField
-                  control={form.control}
-                  name="telefono"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Telefono</FormLabel>
-                      <FormControl>
-                        <Input placeholder="+39 123 456 7890" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>E-mail</FormLabel>
-                      <FormControl>
-                        <Input placeholder="info@azienda.it" type="email" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
               {/* Pulsante Salva */}
-              <div className="flex justify-end">
-                <Button type="submit" size="lg">
-                  Salva
+              <div className="flex justify-end pt-6 border-t border-gray-200">
+                <Button type="submit" size="lg" className="px-8">
+                  Salva Impostazioni
                 </Button>
               </div>
             </form>
