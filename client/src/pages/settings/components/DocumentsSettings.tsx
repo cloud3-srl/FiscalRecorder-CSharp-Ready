@@ -65,27 +65,27 @@ export default function DocumentsSettings() {
     resolver: zodResolver(documentsSchema),
     defaultValues: {
       receipt: {
-        defaultPrinter: "",
+        defaultPrinter: "none",
         printVatDetails: false,
         printDeferredPayment: false,
         courtesyPhrase: "",
       },
       invoice: {
-        defaultPrinter: "",
+        defaultPrinter: "none",
         courtesyPhrase: "",
       },
       account: {
         enableCardPayments: false,
-        defaultPrinter: "",
+        defaultPrinter: "none",
         printHeader: false,
         courtesyPhrase: "",
       },
       receiptCopy: {
-        defaultPrinter: "",
+        defaultPrinter: "none",
         courtesyPhrase: "",
       },
       barcode: {
-        defaultPrinter: "",
+        defaultPrinter: "none",
       },
     },
   });

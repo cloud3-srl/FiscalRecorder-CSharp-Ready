@@ -189,7 +189,7 @@ export function usePrintersDropdown() {
   const activePrinters = printers.filter(p => p.isActive);
   
   const options: PrinterOption[] = [
-    { value: '', label: 'Nessuna' },
+    { value: 'none', label: 'Nessuna' },
     ...activePrinters.map(printer => ({
       value: printer.id.toString(),
       label: printer.name,
