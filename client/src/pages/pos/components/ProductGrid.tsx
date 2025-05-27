@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Product } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Search, Trash2, RefreshCw } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -20,10 +20,41 @@ interface ProductGridProps {
 
 export default function ProductGrid({ onProductSelect, onSearchChange }: ProductGridProps) {
   const [search, setSearch] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   const { data: products, isLoading } = useQuery<Product[]>({
     queryKey: ['/api/products'],
   });
+
+  // Focus automatico sul campo di ricerca
+  useEffect(() => {
+    const focusSearchInput = () => {
+      if (searchInputRef.current) {
+        searchInputRef.current.focus();
+      }
+    };
+
+    // Focus iniziale
+    focusSearchInput();
+
+    // Focus quando si clicca fuori e si ritorna alla finestra
+    const handleFocus = () => focusSearchInput();
+    const handleClick = (e: MouseEvent) => {
+      // Se non si clicca su un input o button, rifocalizza la ricerca
+      const target = e.target as HTMLElement;
+      if (!target.closest('input') && !target.closest('button') && !target.closest('[role="button"]')) {
+        setTimeout(focusSearchInput, 0);
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('click', handleClick);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('click', handleClick);
+    };
+  }, []);
 
   // Ricerca migliorata con supporto per barcode
   const filteredProducts = search ? products?.filter(product => 
@@ -41,13 +72,14 @@ export default function ProductGrid({ onProductSelect, onSearchChange }: Product
       <div className="flex gap-2">
         <Search className="w-5 h-5 text-muted-foreground" />
         <Input
+          ref={searchInputRef}
           placeholder="Nome Articolo, Codice Prodotto o Codice a Barre..."
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
             onSearchChange(e.target.value); // Notifica il cambiamento
           }}
-          className="flex-1"
+          className="flex-1 focus:border-transparent focus:ring-0 focus:shadow-[0_0_0_2px_rgba(34,197,94,0.3)] focus:shadow-green-500/30 transition-shadow duration-200"
           autoFocus
         />
       </div>
@@ -78,6 +110,12 @@ export default function ProductGrid({ onProductSelect, onSearchChange }: Product
                     onProductSelect(product);
                     setSearch(""); 
                     onSearchChange(""); // Notifica che la ricerca è terminata
+                    // Rifocalizza il campo di ricerca dopo la selezione
+                    setTimeout(() => {
+                      if (searchInputRef.current) {
+                        searchInputRef.current.focus();
+                      }
+                    }, 0);
                   }}
                 >
                   <TableCell>{product.code}</TableCell>
