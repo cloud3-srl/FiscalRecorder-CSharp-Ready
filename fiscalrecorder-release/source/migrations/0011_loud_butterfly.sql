@@ -1,0 +1,2 @@
+TRUNCATE TABLE "sale_items", "sales" RESTART IDENTITY CASCADE;
+ALTER TABLE "sales" ALTER COLUMN "warehouse_id" DROP NOT NULL;

@@ -61,6 +61,16 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // CassaNova Colors
+        cassanova: {
+          primary: "#FF6B35", // Arancione principale
+          secondary: "#2C3E50", // Grigio secondario
+          success: "#28a745",
+          warning: "#ffc107", 
+          danger: "#dc3545",
+          light: "#f8f9fa",
+          dark: "#343a40",
+        },
       },
       keyframes: {
         "accordion-down": {
@@ -83,6 +93,10 @@ export default {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+      },
+      fontFamily: {
+        sans: ['Roboto', 'system-ui', 'sans-serif'],
+        roboto: ['Roboto', 'sans-serif'],
       },
     },
   },

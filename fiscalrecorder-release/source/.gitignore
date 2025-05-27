@@ -1,0 +1,17 @@
+node_modules
+dist
+.DS_Store
+server/public
+vite.config.ts.*
+*.tar.gz
+.env
+.env.*
+coverage
+build
+*.log
+npm-debug.log*
+.vscode
+.idea
+*.swp
+*.swo
+asset_design/

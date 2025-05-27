@@ -29,9 +29,8 @@ export function SaleModesSettings() {
   return <SettingsTemplate description="Configura le modalità di vendita" buttonText="Aggiungi Modalità" />;
 }
 
-export function PrintersSettings() {
-  return <SettingsTemplate description="Configura le stampanti" buttonText="Aggiungi Stampante" />;
-}
+// Import del componente stampanti completo
+export { PrintersSettings } from "./printers/PrintersSettings";
 
 export function BarcodeReadersSettings() {
   return <SettingsTemplate description="Configura i lettori di codici a barre" buttonText="Aggiungi Lettore" />;
@@ -72,7 +71,6 @@ export function ImportSettings() {
 // Export default per compatibilità
 export default {
   SaleModesSettings,
-  PrintersSettings,
   BarcodeReadersSettings,
   ClientDisplaySettings,
   PaymentsSettings,

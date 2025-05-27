@@ -1,0 +1,97 @@
+Prompt per lo sviluppo di un'interfaccia per registratore fiscale
+Obiettivo
+Sviluppare un'interfaccia moderna e funzionale per un registratore fiscale che consenta la gestione completa delle vendite, l'interazione con database MSSQL, la stampa fiscale tramite driver Epson e possibilmente implementata come Progressive Web App (PWA).
+Requisiti funzionali
+Database e Query
+
+Implementare connessione a database MSSQL
+Permettere query per:
+
+Ricerca articoli (per codice, nome, categoria)
+Gestione listini prezzi
+Storico vendite
+Gestione inventario
+Report giornalieri, settimanali e mensili
+
+
+
+Interazione con stampante fiscale
+
+Integrazione con driver Epson per stampanti fiscali
+Gestione della stampa di:
+
+Scontrini fiscali
+Fatture semplificate
+Report Z giornalieri
+Stampe di cortesia
+
+
+
+Interfaccia utente
+
+Interfaccia principale con layout simile allo screenshot fornito
+Area personalizzabile con pulsanti rapidi per articoli frequenti
+Layout responsive per adattarsi a diversi dispositivi (desktop, tablet)
+Modalità touch-screen ottimizzata
+Area per visualizzazione articoli in corso di vendita
+Pannello numerico per inserimento quantità e prezzi
+Funzionalità di ricerca rapida articoli
+
+Gestione articoli e listini
+
+Importazione massiva da file CSV per:
+
+Nuovi articoli
+Aggiornamento listini
+Gestione promozioni
+
+
+Interfaccia per la creazione/modifica di singoli articoli
+Gestione di articoli con varianti (taglia, colore, ecc.)
+
+PWA (Progressive Web App)
+
+Valutare l'implementabilità come PWA per:
+
+Funzionamento offline (con sincronizzazione successiva)
+Installazione su dispositivi senza necessità di app store
+Aggiornamenti automatici
+Riduzione dei tempi di caricamento
+
+
+
+Funzionalità aggiuntive
+
+Gestione multi-operatore con login
+Gestione di diverse modalità di pagamento (contanti, carte, buoni)
+Calcolo automatico del resto
+Gestione resi e storni
+Supporto per sconti (percentuali, assoluti, promozionali)
+
+Requisiti tecnici
+
+Framework frontend moderno (React, Vue.js o Angular)
+Backend con supporto per query MSSQL ottimizzate
+Architettura modulare per facilitare future estensioni
+API RESTful per comunicazione client-server
+Gestione sicura delle autenticazioni
+Logging completo delle operazioni per audit
+
+Testing e sviluppo
+
+Implementare un ambiente di test che permetta:
+
+Caricamento di file CSV di test per articoli e listini
+Simulazione di stampa fiscale senza utilizzo di hardware reale
+Mock del database per test isolati
+
+
+
+Consegna attesa
+
+Codice sorgente completo con documentazione
+Manuale utente con spiegazione delle funzionalità
+Istruzioni di installazione e configurazione
+Piano di migrazione dati (se applicabile)
+
+Per favore, allegherei anche lo screenshot di esempio dell'interfaccia grafica per fornire un riferimento visivo del layout desiderato, con particolare attenzione all'area personalizzabile per i pulsanti rapidi.

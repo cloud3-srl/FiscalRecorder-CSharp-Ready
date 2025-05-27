@@ -14,6 +14,7 @@ interface PaymentModalProps {
   totalAmount: number;
   cartItems: Array<{product: Product, quantity: number}>; // Per eventuale stampa
   onPaymentComplete: (paymentDetails: any) => void; // Dettagli del pagamento
+  selectedCustomer?: Customer | null; // Nuovo: cliente preselezionato dal POS
 }
 
 import { Button } from "@/components/ui/button";
@@ -22,19 +23,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { Product } from "@shared/schema";
-import { useState } from "react";
+import { Product, Customer } from "@shared/schema";
+import { useState, useEffect } from "react";
 import CashInputKeypad from "./CashInputKeypad";
 import CustomerSearchModal from "./CustomerSearchModal"; 
-// import { ExternalCustomer } from "@shared/schema"; // Rimosso, useremo schema.Customer
-import * as schema from "@shared/schema"; // Aggiunto per schema.Customer
 import { 
   CreditCard, Landmark, Ticket, Gift, Wallet, CalendarOff, 
   University, TrendingUp, TrendingDown, Contact, Building, FileText, Minus, Plus 
 } from "lucide-react"; // Alcune icone esempio
-
-// Esempio di metodi di pagamento
-// const paymentMethods = []; // Spostato dentro il componente
 
 export default function PaymentModal({
   isOpen,
@@ -42,11 +38,19 @@ export default function PaymentModal({
   totalAmount,
   // cartItems, 
   onPaymentComplete,
+  selectedCustomer: preselectedCustomer, // Rinomino per evitare conflitti
 }: PaymentModalProps) {
   const [cashReceivedAmount, setCashReceivedAmount] = useState(0);
   const [isCashKeypadOpen, setIsCashKeypadOpen] = useState(false);
   const [isCustomerSearchModalOpen, setIsCustomerSearchModalOpen] = useState(false); 
-  const [selectedCustomer, setSelectedCustomer] = useState<schema.Customer | null>(null); // Modificato tipo
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+
+  // Imposta il cliente preselezionato quando il modal si apre
+  useEffect(() => {
+    if (isOpen && preselectedCustomer) {
+      setSelectedCustomer(preselectedCustomer);
+    }
+  }, [isOpen, preselectedCustomer]);
 
   // Calcolo del resto e importo dovuto (REINSERITI)
   const rest = cashReceivedAmount > 0 ? Math.max(0, cashReceivedAmount - totalAmount) : 0;
@@ -71,10 +75,6 @@ export default function PaymentModal({
   { name: "SATISPAY", icon: Wallet, id: "satispay" }, // Modificato da PAYPAL e icona Wallet per ora
 ]; // Fine della definizione di paymentMethods spostata dentro il componente
 
-// La seconda definizione di export default function PaymentModal e le sue variabili di stato interne
-// sono state rimosse perché erano una duplicazione errata.
-// Il return corretto è quello che segue la prima (e ora unica) definizione di PaymentModal.
-
   const handleCashPaymentSubmit = (amount: number) => {
     setCashReceivedAmount(amount);
     // Qui si potrebbe aggiungere logica per pagamenti parziali o multipli
@@ -83,7 +83,7 @@ export default function PaymentModal({
   const handlePrint = () => {
     // Logica per la stampa/completamento pagamento
     console.log("Pagamento completato/Stampa richiesta");
-    onPaymentComplete({ method: "CONTANTI", amount: totalAmount }); // Esempio
+    onPaymentComplete({ method: "CONTANTI", amount: totalAmount, customer: selectedCustomer }); // Include il cliente
     onOpenChange(false); // Chiudi modale
   };
 
@@ -180,8 +180,14 @@ export default function PaymentModal({
                 <div>
                   <Label>Scontrino parlante</Label>
                   <div className="grid grid-cols-2 gap-2 mt-1">
-                    <Input placeholder="Codice Fiscale" />
-                    <Input placeholder="Partita IVA" />
+                    <Input 
+                      placeholder="Codice Fiscale" 
+                      defaultValue={selectedCustomer?.fiscalCode || ""}
+                    />
+                    <Input 
+                      placeholder="Partita IVA" 
+                      defaultValue={selectedCustomer?.vatNumber || ""}
+                    />
                   </div>
                 </div>
                 <div>
