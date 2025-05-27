@@ -25,9 +25,11 @@ export default function ProductGrid({ onProductSelect, onSearchChange }: Product
     queryKey: ['/api/products'],
   });
 
+  // Ricerca migliorata con supporto per barcode
   const filteredProducts = search ? products?.filter(product => 
     product.name.toLowerCase().includes(search.toLowerCase()) ||
-    product.code.toLowerCase().includes(search.toLowerCase())
+    product.code.toLowerCase().includes(search.toLowerCase()) ||
+    (product.barcode && product.barcode.toLowerCase().includes(search.toLowerCase()))
   ) : [];
 
   if (isLoading) {
@@ -39,7 +41,7 @@ export default function ProductGrid({ onProductSelect, onSearchChange }: Product
       <div className="flex gap-2">
         <Search className="w-5 h-5 text-muted-foreground" />
         <Input
-          placeholder="Incomincia a digitare Nome Articolo o spara il Codice a Barre..."
+          placeholder="Nome Articolo, Codice Prodotto o Codice a Barre..."
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
@@ -58,6 +60,7 @@ export default function ProductGrid({ onProductSelect, onSearchChange }: Product
                 {/* <TableHead className="w-[50px]">Cancella</TableHead> -- Rimosso come da screenshot POS */}
                 <TableHead>Articolo #</TableHead>
                 <TableHead>Nome Elemento</TableHead>
+                <TableHead>Barcode</TableHead>
                 <TableHead className="text-right">Costo</TableHead>
                 <TableHead className="text-right">Quantità</TableHead>
                 {/* <TableHead>Imballo</TableHead> -- Rimosso come da screenshot POS */}
@@ -79,6 +82,7 @@ export default function ProductGrid({ onProductSelect, onSearchChange }: Product
                 >
                   <TableCell>{product.code}</TableCell>
                   <TableCell>{product.name}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{product.barcode || 'N/D'}</TableCell>
                   <TableCell className="text-right">€{parseFloat(product.price).toFixed(2)}</TableCell>
                   <TableCell className="text-right">{product.inStock || 0}</TableCell>
                   {/* Le colonne aggiuntive sono state commentate/rimosse per corrispondere allo screenshot, 
@@ -99,7 +103,7 @@ export default function ProductGrid({ onProductSelect, onSearchChange }: Product
 
       {search && (!filteredProducts || filteredProducts.length === 0) && (
         <div className="text-center text-muted-foreground py-4">
-          Nessun prodotto trovato
+          Nessun prodotto trovato per "{search}"
         </div>
       )}
     </div>
