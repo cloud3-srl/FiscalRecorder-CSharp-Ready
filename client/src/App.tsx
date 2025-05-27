@@ -76,7 +76,6 @@ const navItems = [
   { href: "/customers", label: "Clienti", icon: Users },
   { href: "/deferred-invoices", label: "Fattura differita", icon: FileClock },
   { href: "/fidelity", label: "Fidelity", icon: Star },
-  { href: "/admin/database", label: "Database e Sync", icon: Database },
   { href: "/settings", label: "Impostazioni", icon: Settings }, 
   { href: "/help-center", label: "Centro assistenza", icon: HelpCircle },
   { href: "/news", label: "News e Comunicazioni", icon: Megaphone },
