@@ -1,12 +1,12 @@
 import type { Express } from "express";
 import { createServer } from "http";
 import { storage } from "./storage";
-import { insertProductSchema, insertQuickButtonSchema, insertDatabaseConfigSchema, insertPrinterConfigSchema, sqlQuerySchema, scheduleOperationSchema, insertDbConnectionLogSchema, insertScheduledOperationSchema, databaseConfigOptionsSchema, insertPaymentMethodSchema } from "@shared/schema";
+import { insertProductSchema, insertQuickButtonSchema, insertDatabaseConfigSchema, insertPrinterConfigSchema, sqlQuerySchema, scheduleOperationSchema, insertDbConnectionLogSchema, insertScheduledOperationSchema, databaseConfigOptionsSchema, insertPaymentMethodSchema, insertFavoriteGroupSchema, insertFavoriteSlotSchema } from "@shared/schema";
 import { z } from "zod";
-import { eq, sql, desc } from 'drizzle-orm';
+import { eq, sql, desc, and } from 'drizzle-orm';
 import { db } from "./db";
 import * as schema from "@shared/schema";
-import { products, quickButtons, databaseConfigs, printerConfigs, dbConnectionLogs, scheduledOperations, sqlQueryHistory, customers as customersTable, paymentMethods } from "@shared/schema";
+import { products, quickButtons, databaseConfigs, printerConfigs, dbConnectionLogs, scheduledOperations, sqlQueryHistory, customers as customersTable, paymentMethods, favoriteGroups, favoriteSlots, departments } from "@shared/schema";
 import multer from "multer";
 import { parse } from "csv-parse";
 import { Readable } from "stream";
@@ -35,6 +35,248 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express) {
+  // API per Gruppi Favoriti
+  app.get("/api/favorite-groups", async (_req, res) => {
+    try {
+      const groups = await db.select().from(favoriteGroups).orderBy(favoriteGroups.displayOrder, favoriteGroups.createdAt);
+      res.json(groups);
+    } catch (error) {
+      console.error('Errore nel recupero gruppi favoriti:', error);
+      res.status(500).json({ error: "Impossibile recuperare i gruppi favoriti" });
+    }
+  });
+
+  app.post("/api/favorite-groups", async (req, res) => {
+    const result = insertFavoriteGroupSchema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+    try {
+      const [group] = await db.insert(favoriteGroups).values(result.data).returning();
+      res.status(201).json(group);
+    } catch (error) {
+      console.error('Errore creazione gruppo favoriti:', error);
+      res.status(500).json({ error: "Impossibile creare il gruppo favoriti" });
+    }
+  });
+
+  app.put("/api/favorite-groups/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID non valido" });
+    }
+    const result = insertFavoriteGroupSchema.partial().safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+    try {
+      const [group] = await db.update(favoriteGroups)
+        .set({ ...result.data, updatedAt: new Date() })
+        .where(eq(favoriteGroups.id, id))
+        .returning();
+      if (!group) {
+        return res.status(404).json({ error: "Gruppo favoriti non trovato" });
+      }
+      res.json(group);
+    } catch (error) {
+      console.error('Errore aggiornamento gruppo favoriti:', error);
+      res.status(500).json({ error: "Impossibile aggiornare il gruppo favoriti" });
+    }
+  });
+
+  app.delete("/api/favorite-groups/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID non valido" });
+    }
+    try {
+      const [deleted] = await db.delete(favoriteGroups)
+        .where(eq(favoriteGroups.id, id))
+        .returning();
+      if (!deleted) {
+        return res.status(404).json({ error: "Gruppo favoriti non trovato" });
+      }
+      res.status(204).end();
+    } catch (error) {
+      console.error('Errore eliminazione gruppo favoriti:', error);
+      res.status(500).json({ error: "Impossibile eliminare il gruppo favoriti" });
+    }
+  });
+
+  // API per Slot Favoriti
+  app.get("/api/favorite-slots/:groupId", async (req, res) => {
+    const groupId = parseInt(req.params.groupId);
+    if (isNaN(groupId)) {
+      return res.status(400).json({ error: "ID gruppo non valido" });
+    }
+    try {
+      const slots = await db
+        .select({
+          id: favoriteSlots.id,
+          groupId: favoriteSlots.groupId,
+          productId: favoriteSlots.productId,
+          positionInGrid: favoriteSlots.positionInGrid,
+          product: {
+            id: products.id,
+            code: products.code,
+            name: products.name,
+            price: products.price,
+            category: products.category,
+            departmentCode: products.departmentCode
+          }
+        })
+        .from(favoriteSlots)
+        .leftJoin(products, eq(favoriteSlots.productId, products.id))
+        .where(eq(favoriteSlots.groupId, groupId))
+        .orderBy(favoriteSlots.positionInGrid);
+      res.json(slots);
+    } catch (error) {
+      console.error('Errore nel recupero slot favoriti:', error);
+      res.status(500).json({ error: "Impossibile recuperare gli slot favoriti" });
+    }
+  });
+
+  app.post("/api/favorite-slots", async (req, res) => {
+    const result = insertFavoriteSlotSchema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+    try {
+      // Rimuovi slot esistente nella stessa posizione dello stesso gruppo
+      await db.delete(favoriteSlots)
+        .where(and(
+          eq(favoriteSlots.groupId, result.data.groupId!),
+          eq(favoriteSlots.positionInGrid, result.data.positionInGrid!)
+        ));
+      
+      const [slot] = await db.insert(favoriteSlots).values(result.data).returning();
+      res.status(201).json(slot);
+    } catch (error) {
+      console.error('Errore creazione slot favoriti:', error);
+      res.status(500).json({ error: "Impossibile creare lo slot favoriti" });
+    }
+  });
+
+  app.delete("/api/favorite-slots/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID non valido" });
+    }
+    try {
+      const [deleted] = await db.delete(favoriteSlots)
+        .where(eq(favoriteSlots.id, id))
+        .returning();
+      if (!deleted) {
+        return res.status(404).json({ error: "Slot favoriti non trovato" });
+      }
+      res.status(204).end();
+    } catch (error) {
+      console.error('Errore eliminazione slot favoriti:', error);
+      res.status(500).json({ error: "Impossibile eliminare lo slot favoriti" });
+    }
+  });
+
+  // API per Reparti (collegata ai gruppi favoriti)
+  app.get("/api/settings/departments", async (_req, res) => {
+    try {
+      const depts = await db.select().from(departments).orderBy(departments.createdAt);
+      res.json(depts);
+    } catch (error) {
+      console.error('Errore nel recupero reparti:', error);
+      res.status(500).json({ error: "Impossibile recuperare i reparti" });
+    }
+  });
+
+  app.post("/api/settings/departments", async (req, res) => {
+    const result = schema.insertDepartmentSchema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+    try {
+      const [dept] = await db.insert(departments).values(result.data).returning();
+      
+      // Crea automaticamente un gruppo favoriti per il nuovo reparto
+      await db.insert(favoriteGroups).values({
+        name: dept.buttonDescription || dept.description,
+        type: 'department',
+        originalId: dept.id,
+        displayOrder: dept.id
+      });
+      
+      res.status(201).json(dept);
+    } catch (error) {
+      console.error('Errore creazione reparto:', error);
+      if (error instanceof Error && 'code' in error && (error as any).code === '23505') {
+        return res.status(409).json({ error: "Reparto già esistente" });
+      }
+      res.status(500).json({ error: "Impossibile creare il reparto" });
+    }
+  });
+
+  app.put("/api/settings/departments/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID non valido" });
+    }
+    const result = schema.insertDepartmentSchema.partial().safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+    try {
+      const [dept] = await db.update(departments)
+        .set({ ...result.data, updatedAt: new Date() })
+        .where(eq(departments.id, id))
+        .returning();
+      if (!dept) {
+        return res.status(404).json({ error: "Reparto non trovato" });
+      }
+      
+      // Aggiorna anche il gruppo favoriti corrispondente se esiste
+      if (result.data.buttonDescription || result.data.description) {
+        await db.update(favoriteGroups)
+          .set({ 
+            name: result.data.buttonDescription || result.data.description || dept.buttonDescription || dept.description,
+            updatedAt: new Date()
+          })
+          .where(and(
+            eq(favoriteGroups.type, 'department'),
+            eq(favoriteGroups.originalId, id)
+          ));
+      }
+      
+      res.json(dept);
+    } catch (error) {
+      console.error('Errore aggiornamento reparto:', error);
+      res.status(500).json({ error: "Impossibile aggiornare il reparto" });
+    }
+  });
+
+  app.delete("/api/settings/departments/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID non valido" });
+    }
+    try {
+      // Elimina anche il gruppo favoriti corrispondente
+      await db.delete(favoriteGroups)
+        .where(and(
+          eq(favoriteGroups.type, 'department'),
+          eq(favoriteGroups.originalId, id)
+        ));
+        
+      const [deleted] = await db.delete(departments)
+        .where(eq(departments.id, id))
+        .returning();
+      if (!deleted) {
+        return res.status(404).json({ error: "Reparto non trovato" });
+      }
+      res.status(204).end();
+    } catch (error) {
+      console.error('Errore eliminazione reparto:', error);
+      res.status(500).json({ error: "Impossibile eliminare il reparto" });
+    }
+  });
+
   // Quick Buttons routes
   app.get("/api/quick-buttons", async (_req, res) => {
     try {
@@ -117,9 +359,8 @@ export async function registerRoutes(app: Express) {
   });
 
   app.post("/api/admin/test-connection", async (req, res) => {
-    // Validazione con schema che include tutti i campi necessari per ConnectionTestParams
     const testConnectionSchema = z.object({
-        id: z.number().optional(), // id è opzionale, usato per logging
+        id: z.number().optional(),
         driver: z.string(),
         server: z.string(),
         database: z.string(),
@@ -134,7 +375,6 @@ export async function registerRoutes(app: Express) {
 
     try {
       const startTime = Date.now();
-      // testMssqlConnection si aspetta un oggetto con i campi di ConnectionTestParams
       const success = await testMssqlConnection(configToTest);
       const message = success ? "Connessione stabilita con successo" : "Test connessione fallito";
       const duration = Date.now() - startTime;
@@ -150,207 +390,11 @@ export async function registerRoutes(app: Express) {
       res.status(500).json({ error: "Impossibile testare la connessione" });
     }
   });
-  
-  const specificUpdateSchema = z.object({
-    name: z.string().min(1, "Il nome è obbligatorio").optional(),
-    driver: z.string().optional(),
-    server: z.string().optional(),
-    database: z.string().optional(),
-    username: z.string().optional(),
-    password: z.string().optional(),
-    options: databaseConfigOptionsSchema.nullable().optional(),
-  });
 
-  app.put("/api/admin/database-configs/:id", async (req, res) => {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) { return res.status(400).json({ success: false, error: "ID configurazione non valido" }); }
-    const result = specificUpdateSchema.safeParse(req.body);
-    if (!result.success) { return res.status(400).json({ success: false, error: result.error.flatten() }); }
-    const validatedData = result.data;
-    const updatePayload: Partial<typeof schema.databaseConfigs.$inferInsert> = {};
-    if (validatedData.name !== undefined) updatePayload.name = validatedData.name;
-    if (validatedData.driver !== undefined) updatePayload.driver = validatedData.driver;
-    if (validatedData.server !== undefined) updatePayload.server = validatedData.server;
-    if (validatedData.database !== undefined) updatePayload.database = validatedData.database;
-    if (validatedData.username !== undefined) updatePayload.username = validatedData.username;
-    if (validatedData.password !== undefined) updatePayload.password = validatedData.password;
-    if (validatedData.hasOwnProperty('options')) {
-      if (validatedData.options === null) { updatePayload.options = {}; } 
-      else if (validatedData.options && typeof validatedData.options === 'object') { updatePayload.options = validatedData.options; }
-    }
-    if (Object.keys(updatePayload).length === 0) {
-        const [currentConfig] = await db.select().from(databaseConfigs).where(eq(databaseConfigs.id, id));
-        if (!currentConfig) return res.status(404).json({ success: false, error: "Configurazione non trovata" });
-        return res.json({ success: true, data: currentConfig, message: "Nessun dato modificabile fornito." });
-    }
-    try {
-      const [updatedConfig] = await db.update(databaseConfigs).set(updatePayload).where(eq(databaseConfigs.id, id)).returning();
-      if (!updatedConfig) return res.status(404).json({ success: false, error: "Configurazione non trovata" });
-      res.json({ success: true, data: updatedConfig });
-    } catch (error) {
-      console.error(`Errore aggiornamento config ID ${id}:`, error);
-      res.status(500).json({ success: false, error: "Impossibile aggiornare config", message: error instanceof Error ? error.message : String(error) });
-    }
-  });
-
-  app.patch("/api/admin/database-configs/:id/toggle", async (req, res) => {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) { res.status(400).json({ error: "Invalid ID" }); return; }
-    try {
-      await db.transaction(async (tx) => {
-        await tx.update(databaseConfigs).set({ isActive: false });
-        const [config] = await tx.update(databaseConfigs).set({ isActive: true }).where(eq(databaseConfigs.id, id)).returning();
-        if (!config) throw new Error("Configurazione non trovata per toggle.");
-        res.json(config);
-      });
-    } catch (error) {
-      console.error('Errore toggle config:', error);
-      if (!res.headersSent) res.status(500).json({ error: "Errore toggle config" });
-    }
-  });
-
-  app.get("/api/admin/local-db-info", async (_req, res) => {
-    try {
-      const dbUrl = process.env.DATABASE_URL;
-      if (!dbUrl) {
-        return res.status(500).json({ success: false, error: "DATABASE_URL non configurato nel server." });
-      }
-      const match = dbUrl.match(/postgres(?:ql)?:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/([^?]+)/);
-      if (match) {
-        const [, user, , host, port, dbName] = match; 
-        res.json({ success: true, data: { type: "PostgreSQL", host, port, dbName, user } });
-      } else {
-        const maskedUrl = dbUrl.replace(/:([^@]+)@/, ':********@');
-        res.json({ success: true, data: { type: "PostgreSQL", url: maskedUrl, detailParsingFailed: true } });
-      }
-    } catch (error) {
-      console.error("Errore recupero info DB locale:", error);
-      res.status(500).json({ success: false, error: "Impossibile recuperare info DB locale." });
-    }
-  });
-
-  app.post("/api/local/customers", async (req, res) => {
-    const result = schema.insertCustomerSchema.safeParse(req.body);
-    if (!result.success) { return res.status(400).json({ success: false, error: result.error.flatten() }); }
-    try {
-      const [newCustomer] = await db.insert(schema.customers).values(result.data).returning();
-      res.status(201).json({ success: true, data: newCustomer });
-    } catch (error) {
-      console.error("Errore creazione cliente locale:", error);
-      if (error instanceof Error && 'code' in error && (error as any).code === '23505') {
-         return res.status(409).json({ success: false, error: "Cliente con dati univoci esistente." });
-      }
-      res.status(500).json({ success: false, error: "Impossibile creare cliente locale" });
-    }
-  });
-
-  // Products routes (implementazioni abbreviate per brevità)
+  // Products routes
   app.get("/api/products", async (_req, res) => { const prods = await storage.getAllProducts(); res.json(prods); });
-  app.get("/api/local/customers", async (_req, res) => { try { const custs = await db.select().from(customersTable); res.json({success: true, customers: custs}); } catch(e) { res.status(500).json({success: false, error: "Errore"}); }});
-  app.post("/api/products", async (req, res) => { /* ... */ });
-  app.patch("/api/products/:id", async (req, res) => { /* ... */ });
-  app.post("/api/admin/import-products", upload.single('file'), async (req, res) => { /* ... */ });
-  app.get("/api/admin/import-errors/:id", (req, res) => { /* ... */ });
-  app.get("/api/sales", async (_req, res) => { /* ... */ });
-  app.post("/api/sales", async (req, res) => { /* ... */ });
-  app.get("/api/admin/printer-config", async (_req, res) => { /* ... */ });
-  app.post("/api/admin/printer-config", async (req, res) => { /* ... */ });
-  app.get("/api/admin/available-printers", async (_req, res) => { /* ... */ });
-  app.post("/api/admin/execute-query", async (req, res) => { /* ... */ });
-  app.get("/api/admin/query-history", async (req, res) => { /* ... */ });
-  app.get("/api/c3exppos", async (req, res) => { /* ... */ });
-  app.get("/api/admin/connection-logs", async (req, res) => { /* ... */ });
-  app.post("/api/admin/scheduled-operations", async (req, res) => { /* ... */ });
-  app.get("/api/admin/scheduled-operations", async (_req, res) => { /* ... */ });
-  app.delete("/api/admin/scheduled-operations/:id", async (req, res) => { /* ... */ });
 
-  // API per sincronizzazione prodotti
-  app.post("/api/admin/sync/products-now", async (req, res) => {
-    try {
-      const [activeConfig] = await db.select().from(databaseConfigs).where(eq(databaseConfigs.isActive, true));
-      if (!activeConfig) {
-        return res.status(400).json({ success: false, error: "Nessuna configurazione database attiva trovata" });
-      }
-
-      const options = activeConfig.options as any || {};
-      const syncTableNames = options.syncTableNames || {};
-      const productTableName = syncTableNames.products;
-      const companyCode = options.defaultCompanyCodeForSync || req.body.companyCode || 'SCARL';
-
-      const result = await importProductsFromExternalDb(activeConfig, companyCode, productTableName);
-      
-      if (result.success) {
-        await db.update(databaseConfigs)
-          .set({ lastSync: new Date() })
-          .where(eq(databaseConfigs.id, activeConfig.id));
-      }
-
-      res.json({
-        success: result.success,
-        message: result.success 
-          ? `Sincronizzazione prodotti completata: ${result.updatedCount} record processati`
-          : `Errore sincronizzazione prodotti: ${result.error}`,
-        data: {
-          importedCount: result.importedCount,
-          updatedCount: result.updatedCount,
-          tableName: productTableName || 'C3EXPPOS',
-          companyCode
-        }
-      });
-    } catch (error) {
-      console.error('Errore sincronizzazione prodotti:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: "Errore durante la sincronizzazione prodotti",
-        details: error instanceof Error ? error.message : String(error)
-      });
-    }
-  });
-
-  // API per sincronizzazione clienti
-  app.post("/api/admin/sync/customers-now", async (req, res) => {
-    try {
-      const [activeConfig] = await db.select().from(databaseConfigs).where(eq(databaseConfigs.isActive, true));
-      if (!activeConfig) {
-        return res.status(400).json({ success: false, error: "Nessuna configurazione database attiva trovata" });
-      }
-
-      const options = activeConfig.options as any || {};
-      const syncTableNames = options.syncTableNames || {};
-      const customerTableNamePattern = syncTableNames.customers;
-      const companyCode = options.defaultCompanyCodeForSync || req.body.companyCode || 'SCARL';
-
-      const result = await importExternalCustomersToLocalDb(activeConfig, companyCode, customerTableNamePattern);
-      
-      if (result.success) {
-        await db.update(databaseConfigs)
-          .set({ lastSync: new Date() })
-          .where(eq(databaseConfigs.id, activeConfig.id));
-      }
-
-      res.json({
-        success: result.success,
-        message: result.success 
-          ? `Sincronizzazione clienti completata: ${result.updatedCount} record processati`
-          : `Errore sincronizzazione clienti: ${result.error}`,
-        data: {
-          importedCount: result.importedCount,
-          updatedCount: result.updatedCount,
-          tableName: customerTableNamePattern ? customerTableNamePattern.replace('{companyCode}', companyCode) : `${companyCode}CONTI`,
-          companyCode
-        }
-      });
-    } catch (error) {
-      console.error('Errore sincronizzazione clienti:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: "Errore durante la sincronizzazione clienti",
-        details: error instanceof Error ? error.message : String(error)
-      });
-    }
-  });
-
-  // Codici di Pagamento - Endpoint implementati
+  // Codici di Pagamento
   app.get("/api/settings/payment-methods", async (_req, res) => {
     try {
       const methods = await db.select().from(paymentMethods).orderBy(paymentMethods.createdAt);
@@ -375,154 +419,6 @@ export async function registerRoutes(app: Express) {
         return res.status(409).json({ error: "Codice di pagamento già esistente" });
       }
       res.status(500).json({ error: "Impossibile creare il codice di pagamento" });
-    }
-  });
-
-  app.put("/api/settings/payment-methods/:id", async (req, res) => {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ error: "ID non valido" });
-    }
-    const result = insertPaymentMethodSchema.partial().safeParse(req.body);
-    if (!result.success) {
-      return res.status(400).json({ error: result.error });
-    }
-    try {
-      const [method] = await db.update(paymentMethods)
-        .set({ ...result.data, updatedAt: new Date() })
-        .where(eq(paymentMethods.id, id))
-        .returning();
-      if (!method) {
-        return res.status(404).json({ error: "Codice di pagamento non trovato" });
-      }
-      res.json(method);
-    } catch (error) {
-      console.error('Errore aggiornamento codice di pagamento:', error);
-      res.status(500).json({ error: "Impossibile aggiornare il codice di pagamento" });
-    }
-  });
-
-  app.delete("/api/settings/payment-methods/:id", async (req, res) => {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ error: "ID non valido" });
-    }
-    try {
-      const [deleted] = await db.delete(paymentMethods)
-        .where(eq(paymentMethods.id, id))
-        .returning();
-      if (!deleted) {
-        return res.status(404).json({ error: "Codice di pagamento non trovato" });
-      }
-      res.status(204).end();
-    } catch (error) {
-      console.error('Errore eliminazione codice di pagamento:', error);
-      res.status(500).json({ error: "Impossibile eliminare il codice di pagamento" });
-    }
-  });
-
-  // API per sincronizzazione metodi di pagamento
-  app.post("/api/admin/sync/payment-methods-now", async (req, res) => {
-    try {
-      const [activeConfig] = await db.select().from(databaseConfigs).where(eq(databaseConfigs.isActive, true));
-      if (!activeConfig) {
-        return res.status(400).json({ success: false, error: "Nessuna configurazione database attiva trovata" });
-      }
-
-      const options = activeConfig.options as any || {};
-      const syncTableNames = options.syncTableNames || {};
-      const paymentMethodTableNamePattern = syncTableNames.paymentMethods;
-      const companyCode = options.defaultCompanyCodeForSync || req.body.companyCode || 'SCARL';
-
-      const result = await importPaymentMethodsFromExternalDb(activeConfig, companyCode, paymentMethodTableNamePattern);
-      
-      if (result.success) {
-        await db.update(databaseConfigs)
-          .set({ lastSync: new Date() })
-          .where(eq(databaseConfigs.id, activeConfig.id));
-      }
-
-      res.json({
-        success: result.success,
-        message: result.success 
-          ? `Sincronizzazione codici di pagamento completata: ${result.updatedCount} record processati`
-          : `Errore sincronizzazione codici di pagamento: ${result.error}`,
-        data: {
-          importedCount: result.importedCount,
-          updatedCount: result.updatedCount,
-          tableName: paymentMethodTableNamePattern ? paymentMethodTableNamePattern.replace('{companyCode}', companyCode) : `${companyCode}PAG_AMEN`,
-          companyCode
-        }
-      });
-    } catch (error) {
-      console.error('Errore sincronizzazione codici di pagamento:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: "Errore durante la sincronizzazione codici di pagamento",
-        details: error instanceof Error ? error.message : String(error)
-      });
-    }
-  });
-
-  // API per eliminare configurazioni database
-  app.delete("/api/admin/database-configs/:id", async (req, res) => {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ success: false, error: "ID configurazione non valido" });
-    }
-
-    try {
-      const [config] = await db.select().from(databaseConfigs).where(eq(databaseConfigs.id, id));
-      if (!config) {
-        return res.status(404).json({ success: false, error: "Configurazione non trovata" });
-      }
-
-      if (config.isActive) {
-        return res.status(400).json({ success: false, error: "Impossibile eliminare la configurazione attiva" });
-      }
-
-      await db.delete(databaseConfigs).where(eq(databaseConfigs.id, id));
-      
-      res.json({ success: true, message: "Configurazione eliminata con successo" });
-    } catch (error) {
-      console.error('Errore eliminazione configurazione:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: "Errore durante l'eliminazione della configurazione",
-        details: error instanceof Error ? error.message : String(error)
-      });
-    }
-  });
-
-  // API per attivare una configurazione database
-  app.post("/api/admin/database-configs/:id/toggle-active", async (req, res) => {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) {
-      return res.status(400).json({ success: false, error: "ID configurazione non valido" });
-    }
-
-    try {
-      await db.transaction(async (tx) => {
-        await tx.update(databaseConfigs).set({ isActive: false });
-        
-        const [config] = await tx.update(databaseConfigs)
-          .set({ isActive: true })
-          .where(eq(databaseConfigs.id, id))
-          .returning();
-        
-        if (!config) {
-          throw new Error("Configurazione non trovata");
-        }
-        
-        res.json({ success: true, data: config, message: "Configurazione attivata con successo" });
-      });
-    } catch (error) {
-      console.error('Errore attivazione configurazione:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: "Errore durante l'attivazione della configurazione",
-        details: error instanceof Error ? error.message : String(error)
-      });
     }
   });
 
