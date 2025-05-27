@@ -2,6 +2,7 @@ import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import DocumentsSettingsComponent from "./DocumentsSettings";
 
 // Template component ottimizzato per tutte le sezioni
 const SettingsTemplate = ({ description, buttonText }: { description: string; buttonText: string }) => (
@@ -53,7 +54,7 @@ export function OperatorsSettings() {
 }
 
 export function DocumentsSettings() {
-  return <SettingsTemplate description="Configura i documenti" buttonText="Configura Documenti" />;
+  return <DocumentsSettingsComponent />;
 }
 
 export function OrdersSettings() {
