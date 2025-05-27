@@ -145,66 +145,103 @@ export default function POS() {
   return (
     <div className="h-full flex flex-col">
       <div className="flex flex-col h-full">
-        <div className="grid grid-cols-12 gap-4 mt-0 flex-grow h-full">
-          <div className="col-span-8 h-full">
-            <Card className="px-3 shadow-sm border border-gray-100 rounded-lg overflow-hidden h-full flex flex-col pb-3"> 
+        <div className="grid grid-cols-12 gap-6 flex-grow h-full">
+          <div className="col-span-8 h-full flex flex-col">
+            {/* Margine top per il campo di ricerca */}
+            <div className="mt-8"></div>
+            
+            <Card className="px-4 shadow-sm border border-gray-100 rounded-lg overflow-hidden flex-1 flex flex-col"> 
               <ProductGrid 
                 onProductSelect={(product) => addToCart(product)} 
                 onSearchChange={setSearchTerm}
               />
+              
+              {/* Spazio bianco tra ricerca e bottoni */}
+              <div className="flex-1"></div>
+              
               {!searchTerm && (
-                <div className="mt-3 flex-grow flex flex-col overflow-hidden">
-                  <div className="flex-grow overflow-y-auto">
-                    <QuickButtons onProductSelect={(product) => addToCart(product)} />
-                  </div>
+                <div className="mt-6 pb-4">
+                  <QuickButtons onProductSelect={(product) => addToCart(product)} />
                 </div>
               )}
             </Card>
           </div>
 
-          <div className="col-span-4 space-y-3 flex flex-col h-full">
-            <Card className="p-3 shadow-sm border border-gray-100 rounded-lg">
-              <div className="flex justify-around items-center gap-2">
-                <Button variant="ghost" size="lg" title="Svuota Carrello" onClick={handleClearCart} className="flex flex-col h-16 w-16">
-                  <Trash2 className="h-6 w-6" />
-                  <span className="text-xs mt-1">Svuota</span>
-                </Button>
-                <Button variant="ghost" size="lg" title="Salva Conto" onClick={handleSaveAccount} className="flex flex-col h-16 w-16">
-                  <Save className="h-6 w-6" />
-                  <span className="text-xs mt-1">Salva</span>
-                </Button>
-                <Button variant="ghost" size="lg" title="Pulisci Campi" onClick={handleClearCart} className="flex flex-col h-16 w-16">
-                  <PlusCircle className="h-6 w-6" />
-                  <span className="text-xs mt-1">Pulisci</span>
-                </Button>
-                <Button variant="ghost" size="lg" title="Associa Cliente" onClick={handleSelectCustomer} className="flex flex-col h-16 w-16">
-                  <UserSearch className="h-6 w-6" />
-                  <span className="text-xs mt-1">Cliente</span>
-                </Button>
-                <Button variant="ghost" size="lg" title="Info Negozio/Azienda" className="flex flex-col h-16 w-16">
-                  <Store className="h-6 w-6" />
-                  <span className="text-xs mt-1">Negozio</span>
-                </Button>
-              </div>
-            </Card>
-
+          <div className="col-span-4 flex flex-col h-full">
+            {/* Margine top allineato con la colonna sinistra */}
+            <div className="mt-8"></div>
+            
             {/* Mostra cliente selezionato */}
             {selectedCustomer && (
-              <Card className="p-3 shadow-sm border border-green-200 bg-green-50 rounded-lg">
-                <div className="text-sm">
+              <Card className="p-4 mb-4 shadow-sm border border-green-200 bg-green-50 rounded-lg">
+                <div className="text-base">
                   <div className="font-medium text-green-800">Cliente: {selectedCustomer.name}</div>
-                  <div className="text-green-600 text-xs">
+                  <div className="text-green-600 text-sm">
                     {selectedCustomer.code} • {selectedCustomer.vatNumber || selectedCustomer.fiscalCode || 'N/D'}
                   </div>
                 </div>
               </Card>
             )}
 
-            <Card className="p-4 shadow-sm border border-gray-100 rounded-lg overflow-hidden flex-grow">
+            <Card className="p-5 shadow-sm border border-gray-100 rounded-lg overflow-hidden flex-1 flex flex-col">
               <Cart items={cart} setItems={setCart} />
             </Card>
             
-            <Card className="p-3 shadow-sm border border-gray-100 rounded-lg">
+            {/* Spazio tra carrello e bottoni di controllo */}
+            <div className="h-4"></div>
+            
+            {/* Bottoni di controllo spostati in basso e ingranditi */}
+            <Card className="p-4 shadow-sm border border-gray-100 rounded-lg">
+              <div className="grid grid-cols-3 gap-3">
+                <Button 
+                  variant="ghost" 
+                  title="Svuota Carrello" 
+                  onClick={handleClearCart} 
+                  className="flex flex-col h-20 w-full text-base"
+                >
+                  <Trash2 className="h-8 w-8 mb-1" />
+                  <span className="text-sm">Svuota</span>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  title="Salva Conto" 
+                  onClick={handleSaveAccount} 
+                  className="flex flex-col h-20 w-full text-base"
+                >
+                  <Save className="h-8 w-8 mb-1" />
+                  <span className="text-sm">Salva</span>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  title="Pulisci Campi" 
+                  onClick={handleClearCart} 
+                  className="flex flex-col h-20 w-full text-base"
+                >
+                  <PlusCircle className="h-8 w-8 mb-1" />
+                  <span className="text-sm">Pulisci</span>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  title="Associa Cliente" 
+                  onClick={handleSelectCustomer} 
+                  className="flex flex-col h-20 w-full text-base"
+                >
+                  <UserSearch className="h-8 w-8 mb-1" />
+                  <span className="text-sm">Cliente</span>
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  title="Info Negozio/Azienda" 
+                  className="flex flex-col h-20 w-full text-base"
+                >
+                  <Store className="h-8 w-8 mb-1" />
+                  <span className="text-sm">Negozio</span>
+                </Button>
+                <div className="flex flex-col h-20 w-full"></div> {/* Spazio vuoto per mantenere griglia 3x2 */}
+              </div>
+            </Card>
+            
+            <Card className="p-4 mt-4 shadow-sm border border-gray-100 rounded-lg">
               <NewNumericKeypad onKeyPress={handleNumericKeyPress} />
             </Card>
           </div>
