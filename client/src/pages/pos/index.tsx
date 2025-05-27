@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,15 +13,6 @@ import { Product, Customer } from "@shared/schema";
 import { Trash2, Save, PlusCircle, UserSearch, Store } from "lucide-react";
 import NewNumericKeypad from "./components/NewNumericKeypad";
 import PaymentModal from "./components/PaymentModal";
-
-const categoryTabs = [
-  { value: "preferiti", label: "Preferiti" },
-  { value: "reparti", label: "Reparti" },
-  { value: "cat1", label: "Categoria Pers. 1" },
-  { value: "cat2", label: "Categoria Pers. 2" },
-  { value: "cat3", label: "Categoria Pers. 3" },
-  { value: "cat4", label: "Categoria Pers. 4" },
-];
 
 // Interfaccia per i conti salvati
 interface SavedAccount {
@@ -37,7 +27,6 @@ interface SavedAccount {
 export default function POS() {
   // Stati esistenti
   const [cart, setCart] = useState<Array<{product: Product, quantity: number}>>([]);
-  const [activeCategoryTab, setActiveCategoryTab] = useState<string>(categoryTabs[0].value);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [displayValue, setDisplayValue] = useState("0.00");
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -158,63 +147,50 @@ export default function POS() {
       <div className="flex flex-col h-full">
         <div className="grid grid-cols-12 gap-4 mt-0 flex-grow h-full">
           <div className="col-span-8 h-full">
-            <Card className="px-2 shadow-sm border border-gray-100 rounded-lg overflow-hidden h-full flex flex-col pb-2"> 
+            <Card className="px-3 shadow-sm border border-gray-100 rounded-lg overflow-hidden h-full flex flex-col pb-3"> 
               <ProductGrid 
                 onProductSelect={(product) => addToCart(product)} 
                 onSearchChange={setSearchTerm}
               />
               {!searchTerm && (
-                <Tabs value={activeCategoryTab} onValueChange={setActiveCategoryTab} className="mt-2 flex-grow flex flex-col overflow-hidden">
-                  <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 shrink-0">
-                    {categoryTabs.map(tab => (
-                      <TabsTrigger key={tab.value} value={tab.value}>{tab.label}</TabsTrigger>
-                    ))}
-                  </TabsList>
-                  {categoryTabs.map(tab => (
-                    <TabsContent 
-                      key={tab.value} 
-                      value={tab.value} 
-                      className="flex-grow flex flex-col overflow-hidden pt-2"
-                    >
-                      <div className="flex-grow overflow-y-auto p-1">
-                        {/* Area per prodotti filtrati, vuota per ora */}
-                      </div>
-                      {tab.value === "preferiti" && (
-                        <div className="pt-2 border-t mt-1 flex-grow overflow-y-auto">
-                          <QuickButtons onProductSelect={(product) => addToCart(product)} />
-                        </div>
-                      )}
-                    </TabsContent>
-                  ))}
-                </Tabs>
+                <div className="mt-3 flex-grow flex flex-col overflow-hidden">
+                  <div className="flex-grow overflow-y-auto">
+                    <QuickButtons onProductSelect={(product) => addToCart(product)} />
+                  </div>
+                </div>
               )}
             </Card>
           </div>
 
-          <div className="col-span-4 space-y-2 flex flex-col h-full">
-            <Card className="p-2 shadow-sm border border-gray-100 rounded-lg">
-              <div className="flex justify-around items-center">
-                <Button variant="ghost" size="icon" title="Svuota Carrello" onClick={handleClearCart}>
-                  <Trash2 className="h-5 w-5" />
+          <div className="col-span-4 space-y-3 flex flex-col h-full">
+            <Card className="p-3 shadow-sm border border-gray-100 rounded-lg">
+              <div className="flex justify-around items-center gap-2">
+                <Button variant="ghost" size="lg" title="Svuota Carrello" onClick={handleClearCart} className="flex flex-col h-16 w-16">
+                  <Trash2 className="h-6 w-6" />
+                  <span className="text-xs mt-1">Svuota</span>
                 </Button>
-                <Button variant="ghost" size="icon" title="Salva Conto" onClick={handleSaveAccount}>
-                  <Save className="h-5 w-5" />
+                <Button variant="ghost" size="lg" title="Salva Conto" onClick={handleSaveAccount} className="flex flex-col h-16 w-16">
+                  <Save className="h-6 w-6" />
+                  <span className="text-xs mt-1">Salva</span>
                 </Button>
-                <Button variant="ghost" size="icon" title="Pulisci Campi" onClick={handleClearCart}>
-                  <PlusCircle className="h-5 w-5" />
+                <Button variant="ghost" size="lg" title="Pulisci Campi" onClick={handleClearCart} className="flex flex-col h-16 w-16">
+                  <PlusCircle className="h-6 w-6" />
+                  <span className="text-xs mt-1">Pulisci</span>
                 </Button>
-                <Button variant="ghost" size="icon" title="Associa Cliente" onClick={handleSelectCustomer}>
-                  <UserSearch className="h-5 w-5" />
+                <Button variant="ghost" size="lg" title="Associa Cliente" onClick={handleSelectCustomer} className="flex flex-col h-16 w-16">
+                  <UserSearch className="h-6 w-6" />
+                  <span className="text-xs mt-1">Cliente</span>
                 </Button>
-                <Button variant="ghost" size="icon" title="Info Negozio/Azienda">
-                  <Store className="h-5 w-5" />
+                <Button variant="ghost" size="lg" title="Info Negozio/Azienda" className="flex flex-col h-16 w-16">
+                  <Store className="h-6 w-6" />
+                  <span className="text-xs mt-1">Negozio</span>
                 </Button>
               </div>
             </Card>
 
             {/* Mostra cliente selezionato */}
             {selectedCustomer && (
-              <Card className="p-2 shadow-sm border border-green-200 bg-green-50 rounded-lg">
+              <Card className="p-3 shadow-sm border border-green-200 bg-green-50 rounded-lg">
                 <div className="text-sm">
                   <div className="font-medium text-green-800">Cliente: {selectedCustomer.name}</div>
                   <div className="text-green-600 text-xs">
@@ -228,7 +204,7 @@ export default function POS() {
               <Cart items={cart} setItems={setCart} />
             </Card>
             
-            <Card className="p-2 shadow-sm border border-gray-100 rounded-lg">
+            <Card className="p-3 shadow-sm border border-gray-100 rounded-lg">
               <NewNumericKeypad onKeyPress={handleNumericKeyPress} />
             </Card>
           </div>
