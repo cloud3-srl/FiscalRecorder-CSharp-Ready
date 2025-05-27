@@ -301,21 +301,21 @@ export default function QuickButtons({ onProductSelect }: QuickButtonsProps) {
                   )}
 
                   <div className="w-full">
-                    <div className="text-[10px] font-medium text-muted-foreground">
+                    <div className="text-sm font-medium text-muted-foreground">
                       {slot.product.code}
                     </div>
-                    <div className="text-[8px] leading-tight line-clamp-2 font-medium">
+                    <div className="text-sm leading-tight line-clamp-2 font-medium">
                       {slot.product.name}
                     </div>
                   </div>
-                  <div className="text-xs font-semibold text-blue-600">
+                  <div className="text-sm font-semibold text-blue-600">
                     €{slot.product.price.toString()}
                   </div>
                 </>
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
                   <Plus className="w-4 h-4 mb-1" />
-                  <span className="text-[8px] text-center leading-tight">
+                  <span className="text-sm text-center leading-tight">
                     {isEditMode ? "AGGIUNGI PRODOTTO" : "Slot Vuoto"}
                   </span>
                 </div>
