@@ -81,13 +81,28 @@ function GeneralSettingsComplete() {
     localStorage.setItem('fiscalrecorder.audioSettings', JSON.stringify(newSettings));
   };
 
-  const testBeep = () => {
+  const testBeep = async () => {
     try {
+      // Prova metodo migliorato con gestione errori
       const audio = new Audio('/beep.wav');
       audio.volume = audioSettings.volume;
-      audio.play().catch(console.warn);
+      audio.preload = 'auto';
+      
+      // Aspetta che l'audio sia pronto
+      await new Promise((resolve, reject) => {
+        audio.addEventListener('canplaythrough', resolve, { once: true });
+        audio.addEventListener('error', reject, { once: true });
+        audio.load();
+      });
+      
+      // Riproduci il suono
+      await audio.play();
+      console.log('Test audio completato con successo');
     } catch (error) {
-      console.warn('Impossibile riprodurre il suono test:', error);
+      console.warn('Test audio fallito:', error);
+      
+      // Mostra un alert all'utente se il test fallisce
+      alert('Impossibile riprodurre il suono. Verifica che:\n- I suoni del browser siano abilitati\n- Il volume del sistema sia attivo\n- Il file audio sia caricato correttamente');
     }
   };
 
