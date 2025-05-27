@@ -15,6 +15,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Building2 } from "lucide-react";
 import "@/styles/pos.css";
 
 const companySchema = z.object({
@@ -64,8 +65,16 @@ export default function CompanySettings() {
   return (
     <div className="fullscreen-form">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Ragione sociale</h1>
-        <p className="text-muted-foreground">
+        <div className="flex items-center gap-3">
+          <Building2 className="h-6 w-6 text-blue-600" />
+          <h1 className="text-2xl font-bold">Ragione sociale</h1>
+        </div>
+        <p className="text-sm text-gray-500 font-medium" style={{ 
+          textShadow: '1px 1px 2px rgba(0,0,0,0.1)', 
+          color: '#6b7280',
+          fontSize: '0.875rem',
+          fontWeight: '500'
+        }}>
           Configura le informazioni della tua azienda
         </p>
       </div>
@@ -73,7 +82,11 @@ export default function CompanySettings() {
       <Card className="fullscreen-card">
         <CardHeader>
           <CardTitle>Informazioni Azienda</CardTitle>
-          <CardDescription>
+          <CardDescription style={{ 
+            textShadow: '1px 1px 2px rgba(0,0,0,0.1)', 
+            color: '#6b7280',
+            fontSize: '0.875rem'
+          }}>
             Inserisci i dati della tua azienda che verranno utilizzati nei documenti fiscali
           </CardDescription>
         </CardHeader>

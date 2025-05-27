@@ -18,6 +18,7 @@ import {
   FormDescription,
 } from "@/components/ui/form";
 import { usePrintersDropdown } from "@/hooks/use-printers";
+import { FileText } from "lucide-react";
 import "@/styles/pos.css";
 
 const documentsSchema = z.object({
@@ -101,8 +102,16 @@ export default function DocumentsSettings() {
   return (
     <div className="fullscreen-form">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Documenti</h1>
-        <p className="text-muted-foreground">
+        <div className="flex items-center gap-3">
+          <FileText className="h-6 w-6 text-blue-600" />
+          <h1 className="text-2xl font-bold">Documenti</h1>
+        </div>
+        <p className="text-sm text-gray-500 font-medium" style={{ 
+          textShadow: '1px 1px 2px rgba(0,0,0,0.1)', 
+          color: '#6b7280',
+          fontSize: '0.875rem',
+          fontWeight: '500'
+        }}>
           Configura le impostazioni di stampa per i documenti fiscali
         </p>
       </div>
@@ -110,7 +119,11 @@ export default function DocumentsSettings() {
       <Card className="fullscreen-card">
         <CardHeader>
           <CardTitle>Configurazione Documenti Fiscali</CardTitle>
-          <CardDescription>
+          <CardDescription style={{ 
+            textShadow: '1px 1px 2px rgba(0,0,0,0.1)', 
+            color: '#6b7280',
+            fontSize: '0.875rem'
+          }}>
             Imposta le stampanti predefinite e le opzioni di stampa per ogni tipo di documento
           </CardDescription>
         </CardHeader>

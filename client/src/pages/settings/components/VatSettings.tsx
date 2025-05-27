@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, Percent } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -100,8 +100,16 @@ function VatSettings() {
   return (
     <div className="p-8 max-w-6xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Aliquote IVA</h1>
-        <p className="text-muted-foreground">
+        <div className="flex items-center gap-3">
+          <Percent className="h-6 w-6 text-blue-600" />
+          <h1 className="text-2xl font-bold">Aliquote IVA</h1>
+        </div>
+        <p className="text-sm text-gray-500 font-medium" style={{ 
+          textShadow: '1px 1px 2px rgba(0,0,0,0.1)', 
+          color: '#6b7280',
+          fontSize: '0.875rem',
+          fontWeight: '500'
+        }}>
           Gestisci le aliquote IVA utilizzate nei prodotti
         </p>
       </div>
@@ -111,7 +119,11 @@ function VatSettings() {
           <div className="flex justify-between items-center">
             <div>
               <CardTitle>Lista Aliquote IVA</CardTitle>
-              <CardDescription>
+              <CardDescription style={{ 
+                textShadow: '1px 1px 2px rgba(0,0,0,0.1)', 
+                color: '#6b7280',
+                fontSize: '0.875rem'
+              }}>
                 Configura le aliquote IVA disponibili per i tuoi prodotti
               </CardDescription>
             </div>

@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, Star } from "lucide-react";
+import { Plus, Edit, Trash2, Star, Palette } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -75,8 +75,16 @@ function DepartmentsSettings() {
   return (
     <div className="p-8 max-w-6xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Reparti</h1>
-        <p className="text-muted-foreground">
+        <div className="flex items-center gap-3">
+          <Palette className="h-6 w-6 text-blue-600" />
+          <h1 className="text-2xl font-bold">Reparti</h1>
+        </div>
+        <p className="text-sm text-gray-500 font-medium" style={{ 
+          textShadow: '1px 1px 2px rgba(0,0,0,0.1)', 
+          color: '#6b7280',
+          fontSize: '0.875rem',
+          fontWeight: '500'
+        }}>
           Gestisci i reparti utilizzati per organizzare i prodotti
         </p>
       </div>
@@ -86,7 +94,11 @@ function DepartmentsSettings() {
           <div className="flex justify-between items-center">
             <div>
               <CardTitle>Lista Reparti</CardTitle>
-              <CardDescription>
+              <CardDescription style={{ 
+                textShadow: '1px 1px 2px rgba(0,0,0,0.1)', 
+                color: '#6b7280',
+                fontSize: '0.875rem'
+              }}>
                 Configura i reparti per categorizzare i tuoi prodotti
               </CardDescription>
             </div>
