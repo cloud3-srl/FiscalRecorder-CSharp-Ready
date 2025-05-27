@@ -264,6 +264,7 @@ export default function QuickButtons({ onProductSelect }: QuickButtonsProps) {
             <Button
               key={position}
               variant="outline"
+              title={slot?.product ? `${slot.product.name} - €${slot.product.price} (${slot.product.code})` : isEditMode ? "Clicca per aggiungere un prodotto" : "Slot vuoto"}
               className={cn(
                 "h-16 relative flex flex-col items-start justify-between p-2 text-left bg-white",
                 slot?.product ? "hover:bg-blue-50" : "hover:bg-gray-100 border-dashed"
