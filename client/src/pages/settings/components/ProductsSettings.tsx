@@ -397,7 +397,7 @@ export default function ProductsSettings() {
               <ColumnSelector
                 columns={columns}
                 onColumnsChange={setColumns}
-                tableId="products-table"
+                tableName="products-table"
               />
               
               <Button variant="outline" size="sm" onClick={handleExport}>

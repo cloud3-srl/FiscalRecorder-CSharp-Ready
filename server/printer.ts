@@ -23,10 +23,12 @@ class EpsonPrinter {
 
     // Stampa dettagli articoli
     for (const item of items) {
-      const product = await storage.getProduct(item.productId);
-      if (product) {
-        console.log(`${product.name} x${item.quantity}`);
-        console.log(`€${item.price} (${item.discount || 0}% sconto)`);
+      if (item.productId) {
+        const product = await storage.getProduct(item.productId);
+        if (product) {
+          console.log(`${product.name} x${item.quantity}`);
+          console.log(`€${item.price} (${item.discount || 0}% sconto)`);
+        }
       }
     }
 

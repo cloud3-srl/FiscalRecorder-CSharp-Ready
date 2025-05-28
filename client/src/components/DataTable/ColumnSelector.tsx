@@ -1,36 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { X, Eye, EyeOff, GripVertical, Settings } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Settings2, GripVertical } from "lucide-react";
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
-import {
-  useSortable,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
-import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export interface ColumnConfig {
   key: string;
@@ -38,139 +18,92 @@ export interface ColumnConfig {
   visible: boolean;
   sortable: boolean;
   width?: number;
-  required?: boolean; // Colonne sempre visibili
+  required?: boolean; // Non può essere nascosta
 }
 
 interface ColumnSelectorProps {
   columns: ColumnConfig[];
   onColumnsChange: (columns: ColumnConfig[]) => void;
-  tableId: string; // Identificatore unico per salvare le preferenze
-  disabled?: boolean;
+  tableName: string; // Per persistere le configurazioni
+  className?: string;
 }
 
-interface SortableItemProps {
-  column: ColumnConfig;
-  onToggle: (key: string) => void;
-}
-
-function SortableItem({ column, onToggle }: SortableItemProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: column.key });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={cn(
-        "flex items-center space-x-3 p-3 bg-white border rounded-lg",
-        isDragging && "opacity-50"
-      )}
-    >
-      <div
-        {...attributes}
-        {...listeners}
-        className="cursor-grab hover:cursor-grabbing text-gray-500"
-      >
-        <GripVertical className="h-4 w-4" />
-      </div>
-      <Checkbox
-        checked={column.visible}
-        onCheckedChange={() => onToggle(column.key)}
-        disabled={column.required}
-        className="flex-shrink-0"
-      />
-      <div className="flex-1">
-        <div className="font-medium text-sm">{column.label}</div>
-        {column.required && (
-          <div className="text-xs text-gray-500">Campo obbligatorio</div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-export default function ColumnSelector({ 
-  columns, 
-  onColumnsChange, 
-  tableId, 
-  disabled = false 
-}: ColumnSelectorProps) {
+export const ColumnSelector: React.FC<ColumnSelectorProps> = ({
+  columns,
+  onColumnsChange,
+  tableName,
+  className = ""
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [localColumns, setLocalColumns] = useState<ColumnConfig[]>(columns);
+  const [draggedItem, setDraggedItem] = useState<number | null>(null);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  // Carica configurazione salvata
+  // Carica configurazione dal localStorage
   useEffect(() => {
-    const saved = localStorage.getItem(`columnConfig_${tableId}`);
-    if (saved) {
+    const savedConfig = localStorage.getItem(`columnConfig_${tableName}`);
+    if (savedConfig) {
       try {
-        const savedConfig: ColumnConfig[] = JSON.parse(saved);
-        // Merge con la configurazione corrente per gestire nuove colonne
-        const mergedConfig = columns.map(col => {
-          const savedCol = savedConfig.find(s => s.key === col.key);
+        const parsedConfig = JSON.parse(savedConfig);
+        const mergedColumns = columns.map(col => {
+          const savedCol = parsedConfig.find((saved: ColumnConfig) => saved.key === col.key);
           return savedCol ? { ...col, ...savedCol } : col;
         });
-        setLocalColumns(mergedConfig);
+        setLocalColumns(mergedColumns);
+        onColumnsChange(mergedColumns);
       } catch (error) {
-        console.warn('Errore nel caricamento configurazione colonne:', error);
-        setLocalColumns(columns);
+        console.error('Errore nel caricamento configurazione colonne:', error);
       }
-    } else {
-      setLocalColumns(columns);
     }
-  }, [columns, tableId]);
+  }, [tableName, columns]);
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (over && active.id !== over.id) {
-      setLocalColumns((items) => {
-        const oldIndex = items.findIndex(item => item.key === active.id);
-        const newIndex = items.findIndex(item => item.key === over.id);
-        return arrayMove(items, oldIndex, newIndex);
-      });
-    }
+  // Salva configurazione nel localStorage
+  const saveConfiguration = (newColumns: ColumnConfig[]) => {
+    localStorage.setItem(`columnConfig_${tableName}`, JSON.stringify(newColumns));
+    onColumnsChange(newColumns);
   };
 
-  const handleToggle = (key: string) => {
-    setLocalColumns(prev => 
-      prev.map(col => 
-        col.key === key ? { ...col, visible: !col.visible } : col
-      )
+  const toggleColumnVisibility = (key: string) => {
+    const newColumns = localColumns.map(col => 
+      col.key === key ? { ...col, visible: !col.visible } : col
     );
+    setLocalColumns(newColumns);
+    saveConfiguration(newColumns);
   };
 
-  const handleSave = () => {
-    // Salva in localStorage
-    localStorage.setItem(`columnConfig_${tableId}`, JSON.stringify(localColumns));
+  const resetToDefault = () => {
+    const defaultColumns = columns.map(col => ({ ...col, visible: true }));
+    setLocalColumns(defaultColumns);
+    saveConfiguration(defaultColumns);
+    localStorage.removeItem(`columnConfig_${tableName}`);
+  };
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedItem(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
     
-    // Applica le modifiche
-    onColumnsChange(localColumns);
-    setIsOpen(false);
-  };
+    if (draggedItem === null) return;
 
-  const handleReset = () => {
-    // Ripristina configurazione originale
-    const resetConfig = columns.map(col => ({ ...col, visible: true }));
-    setLocalColumns(resetConfig);
-    localStorage.removeItem(`columnConfig_${tableId}`);
+    const newColumns = [...localColumns];
+    const draggedColumn = newColumns[draggedItem];
+    
+    // Rimuovi l'elemento dalla posizione originale
+    newColumns.splice(draggedItem, 1);
+    
+    // Inserisci nella nuova posizione
+    newColumns.splice(dropIndex, 0, draggedColumn);
+    
+    setLocalColumns(newColumns);
+    saveConfiguration(newColumns);
+    setDraggedItem(null);
   };
 
   const visibleCount = localColumns.filter(col => col.visible).length;
@@ -179,68 +112,147 @@ export default function ColumnSelector({
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          disabled={disabled}
-          className="flex items-center gap-2"
+        <Button
+          variant="outline"
+          size="sm"
+          className={`gap-2 ${className}`}
+          title="Personalizza colonne"
         >
-          <Settings2 className="h-4 w-4" />
+          <Settings size={16} />
           Colonne ({visibleCount}/{totalCount})
         </Button>
       </DialogTrigger>
+      
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Personalizza Colonne</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <Settings size={18} />
+            Personalizza Colonne
+          </DialogTitle>
           <DialogDescription>
-            Seleziona e riordina le colonne da visualizzare nella tabella.
-            Trascina per riordinare, usa i checkbox per mostrare/nascondere.
+            Seleziona le colonne da mostrare e riordinale trascinandole
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-2 max-h-96 overflow-y-auto">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={localColumns.map(col => col.key)}
-              strategy={verticalListSortingStrategy}
-            >
-              {localColumns.map((column) => (
-                <SortableItem
-                  key={column.key}
-                  column={column}
-                  onToggle={handleToggle}
-                />
-              ))}
-            </SortableContext>
-          </DndContext>
-        </div>
-
-        <DialogFooter className="flex justify-between">
-          <Button 
-            variant="outline" 
-            onClick={handleReset}
-            size="sm"
-          >
-            Ripristina
-          </Button>
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => setIsOpen(false)}
+        <div className="space-y-4">
+          <div className="flex justify-between items-center text-sm text-muted-foreground">
+            <span>{visibleCount} di {totalCount} colonne visibili</span>
+            <Button
+              variant="ghost"
               size="sm"
+              onClick={resetToDefault}
+              className="h-auto p-1 text-xs"
             >
-              Annulla
-            </Button>
-            <Button onClick={handleSave} size="sm">
-              Salva
+              Ripristina
             </Button>
           </div>
-        </DialogFooter>
+
+          <ScrollArea className="h-80">
+            <div className="space-y-2">
+              {localColumns.map((column, index) => (
+                <div
+                  key={column.key}
+                  draggable={!column.required}
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDrop={(e) => handleDrop(e, index)}
+                  className={`
+                    flex items-center gap-3 p-2 rounded border
+                    ${draggedItem === index ? 'opacity-50' : ''}
+                    ${column.required ? 'bg-muted/50' : 'hover:bg-muted/50 cursor-move'}
+                    transition-colors
+                  `}
+                >
+                  {!column.required && (
+                    <GripVertical size={14} className="text-muted-foreground" />
+                  )}
+                  
+                  <Checkbox
+                    checked={column.visible}
+                    onCheckedChange={() => !column.required && toggleColumnVisibility(column.key)}
+                    disabled={column.required}
+                    className="shrink-0"
+                  />
+                  
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    {column.visible ? (
+                      <Eye size={14} className="text-green-600 shrink-0" />
+                    ) : (
+                      <EyeOff size={14} className="text-muted-foreground shrink-0" />
+                    )}
+                    
+                    <span className={`
+                      text-sm truncate
+                      ${column.visible ? 'text-foreground' : 'text-muted-foreground'}
+                      ${column.required ? 'font-medium' : ''}
+                    `}>
+                      {column.label}
+                      {column.required && ' *'}
+                    </span>
+                  </div>
+
+                  {column.sortable && (
+                    <span className="text-xs text-muted-foreground shrink-0">
+                      Ordinabile
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+
+          <div className="text-xs text-muted-foreground bg-muted/50 p-2 rounded">
+            <div className="flex items-center gap-1 mb-1">
+              <GripVertical size={12} />
+              <span>Trascina per riordinare</span>
+            </div>
+            <div>* = Colonne obbligatorie (non nascondibili)</div>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
-}
+};
+
+// Hook personalizzato per utilizzare il ColumnSelector
+export const useColumnConfig = (
+  initialColumns: ColumnConfig[],
+  tableName: string
+) => {
+  const [columns, setColumns] = useState<ColumnConfig[]>(initialColumns);
+
+  useEffect(() => {
+    const savedConfig = localStorage.getItem(`columnConfig_${tableName}`);
+    if (savedConfig) {
+      try {
+        const parsedConfig = JSON.parse(savedConfig);
+        const mergedColumns = initialColumns.map(col => {
+          const savedCol = parsedConfig.find((saved: ColumnConfig) => saved.key === col.key);
+          return savedCol ? { ...col, ...savedCol } : col;
+        });
+        setColumns(mergedColumns);
+      } catch (error) {
+        console.error('Errore nel caricamento configurazione colonne:', error);
+        setColumns(initialColumns);
+      }
+    }
+  }, [tableName]);
+
+  const visibleColumns = columns.filter(col => col.visible);
+
+  return {
+    columns,
+    visibleColumns,
+    setColumns,
+    ColumnSelectorComponent: (props: Omit<ColumnSelectorProps, 'columns' | 'onColumnsChange' | 'tableName'>) => (
+      <ColumnSelector
+        columns={columns}
+        onColumnsChange={setColumns}
+        tableName={tableName}
+        {...props}
+      />
+    )
+  };
+};
+
+export default ColumnSelector;

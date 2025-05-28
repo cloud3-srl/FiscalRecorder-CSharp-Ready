@@ -187,7 +187,7 @@ export default function CustomersTable({ customers }: CustomersTableProps) {
           <ColumnSelector
             columns={columns}
             onColumnsChange={setColumns}
-            tableId="customers-table"
+            tableName="customers-table"
           />
           
           <Button variant="outline" size="sm" onClick={handleExport}>

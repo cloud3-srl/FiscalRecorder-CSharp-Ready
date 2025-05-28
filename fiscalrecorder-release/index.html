@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FiscalRecorder - Registratore di Cassa Professionale</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 100px 0;
+            text-align: center;
+        }
+        
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .hero p {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .btn-primary {
+            background: #ff6b6b;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #ee5a5a;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+        }
+        
+        .btn-secondary:hover {
+            background: white;
+            color: #667eea;
+            transform: translateY(-2px);
+        }
+        
+        .features {
+            padding: 80px 0;
+            background: white;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            margin-top: 60px;
+        }
+        
+        .feature-card {
+            text-align: center;
+            padding: 40px 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .feature-icon {
+            font-size: 3rem;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #666;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .installation {
+            padding: 80px 0;
+            background: #f8f9fa;
+        }
+        
+        .install-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-top: 50px;
+        }
+        
+        .install-card {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .install-card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .install-card .btn {
+            margin-top: 20px;
+        }
+        
+        .requirements {
+            padding: 80px 0;
+            background: white;
+        }
+        
+        .req-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+        
+        .req-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .req-icon {
+            font-size: 2rem;
+            color: #4caf50;
+        }
+        
+        footer {
+            background: #333;
+            color: white;
+            padding: 40px 0;
+            text-align: center;
+        }
+        
+        .download-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            max-width: 500px;
+            text-align: center;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 2rem;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .features-grid,
+            .install-options {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-cash-register"></i>
+                    FiscalRecorder
+                </div>
+                <nav>
+                    <a href="#features" style="margin-right: 20px; text-decoration: none; color: #333;">Funzionalità</a>
+                    <a href="#installation" style="margin-right: 20px; text-decoration: none; color: #333;">Installazione</a>
+                    <a href="#requirements" style="text-decoration: none; color: #333;">Requisiti</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <h1>FiscalRecorder</h1>
+            <p>Il registratore di cassa professionale moderno, sicuro e facile da usare</p>
+            <div class="cta-buttons">
+                <button class="btn btn-primary" onclick="showDownloadModal()">
+                    <i class="fas fa-download"></i>
+                    Scarica Ora - GRATIS
+                </button>
+                <a href="#features" class="btn btn-secondary">
+                    <i class="fas fa-info-circle"></i>
+                    Scopri le Funzionalità
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="features">
+        <div class="container">
+            <h2 class="section-title">Funzionalità Avanzate</h2>
+            <p class="section-subtitle">Tutto quello che serve per gestire il tuo punto vendita in modo professionale</p>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <h3>Punto Vendita Moderno</h3>
+                    <p>Interfaccia touch-friendly per vendite rapide ed efficienti. Supporto per codici a barre e ricerca prodotti avanzata.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3>Gestione Clienti</h3>
+                    <p>Anagrafica clienti completa con validazione codice fiscale e P.IVA italiana. Controllo duplicati automatico.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <h3>Gestione Prodotti</h3>
+                    <p>Catalogo prodotti con categorie, prezzi, scorte e codici a barre. Import/export facile da Excel/CSV.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-file-invoice"></i>
+                    </div>
+                    <h3>Documenti Fiscali</h3>
+                    <p>Scontrini, fatture e documenti conformi alla normativa italiana. Stampa automatica e archiviazione sicura.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h3>Report Avanzati</h3>
+                    <p>Statistiche vendite, incassi giornalieri, prodotti più venduti. Esportazione dati per analisi approfondite.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-wifi"></i>
+                    </div>
+                    <h3>Funziona Offline</h3>
+                    <p>Continua a lavorare anche senza internet. Sincronizzazione automatica quando la connessione è disponibile.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="installation" class="installation">
+        <div class="container">
+            <h2 class="section-title">Installazione Semplice</h2>
+            <p class="section-subtitle">Scegli il metodo di installazione più adatto alle tue esigenze</p>
+            
+            <div class="install-options">
+                <div class="install-card">
+                    <div class="feature-icon">
+                        <i class="fab fa-windows"></i>
+                    </div>
+                    <h3>Windows - Installazione Automatica</h3>
+                    <p>File MSI per installazione guidata con un solo click. Include tutti i componenti necessari.</p>
+                    <button class="btn btn-primary" onclick="downloadWindows()">
+                        <i class="fas fa-download"></i>
+                        Scarica MSI (Consigliato)
+                    </button>
+                </div>
+                
+                <div class="install-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-play"></i>
+                    </div>
+                    <h3>Installazione Express</h3>
+                    <p>Script di installazione automatica che configura tutto in pochi minuti. Per tutti i sistemi operativi.</p>
+                    <button class="btn btn-primary" onclick="downloadExpress()">
+                        <i class="fas fa-bolt"></i>
+                        Installazione Express
+                    </button>
+                </div>
+                
+                <div class="install-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-code"></i>
+                    </div>
+                    <h3>Installazione Manuale</h3>
+                    <p>Codice sorgente completo per sviluppatori. Personalizzazione avanzata e deployment su server.</p>
+                    <button class="btn btn-secondary" onclick="downloadSource()">
+                        <i class="fab fa-github"></i>
+                        Codice Sorgente
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="requirements" class="requirements">
+        <div class="container">
+            <h2 class="section-title">Requisiti di Sistema</h2>
+            <p class="section-subtitle">Assicurati che il tuo sistema soddisfi questi requisiti minimi</p>
+            
+            <div class="req-grid">
+                <div class="req-item">
+                    <div class="req-icon">
+                        <i class="fab fa-windows"></i>
+                    </div>
+                    <div>
+                        <h4>Sistema Operativo</h4>
+                        <p>Windows 10/11, macOS, Linux</p>
+                    </div>
+                </div>
+                
+                <div class="req-item">
+                    <div class="req-icon">
+                        <i class="fas fa-memory"></i>
+                    </div>
+                    <div>
+                        <h4>Memoria RAM</h4>
+                        <p>Minimo 4GB (8GB consigliati)</p>
+                    </div>
+                </div>
+                
+                <div class="req-item">
+                    <div class="req-icon">
+                        <i class="fas fa-hdd"></i>
+                    </div>
+                    <div>
+                        <h4>Spazio Disco</h4>
+                        <p>500MB liberi per l'installazione</p>
+                    </div>
+                </div>
+                
+                <div class="req-item">
+                    <div class="req-icon">
+                        <i class="fas fa-globe"></i>
+                    </div>
+                    <div>
+                        <h4>Browser</h4>
+                        <p>Chrome, Firefox, Safari, Edge</p>
+                    </div>
+                </div>
+                
+                <div class="req-item">
+                    <div class="req-icon">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <div>
+                        <h4>Database</h4>
+                        <p>SQLite incluso (opzionale SQL Server)</p>
+                    </div>
+                </div>
+                
+                <div class="req-item">
+                    <div class="req-icon">
+                        <i class="fas fa-print"></i>
+                    </div>
+                    <div>
+                        <h4>Stampante</h4>
+                        <p>Termica o inkjet per scontrini</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 FiscalRecorder. Software libero per registratori di cassa professionali.</p>
+            <p>Sviluppato con ❤️ per i commercianti italiani</p>
+        </div>
+    </footer>
+
+    <!-- Modal di Download -->
+    <div id="downloadModal" class="download-modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeDownloadModal()">&times;</span>
+            <h3>Preparazione Download</h3>
+            <p id="downloadText">Preparazione del pacchetto di installazione...</p>
+            <div class="progress-bar">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+            <p id="progressText">0%</p>
+        </div>
+    </div>
+
+    <script>
+        function showDownloadModal() {
+            document.getElementById('downloadModal').style.display = 'flex';
+            startDownload('auto');
+        }
+
+        function closeDownloadModal() {
+            document.getElementById('downloadModal').style.display = 'none';
+        }
+
+        function downloadWindows() {
+            document.getElementById('downloadModal').style.display = 'flex';
+            startDownload('windows');
+        }
+
+        function downloadExpress() {
+            document.getElementById('downloadModal').style.display = 'flex';
+            startDownload('express');
+        }
+
+        function downloadSource() {
+            document.getElementById('downloadModal').style.display = 'flex';
+            startDownload('source');
+        }
+
+        function startDownload(type) {
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            const downloadText = document.getElementById('downloadText');
+            
+            let progress = 0;
+            
+            const messages = {
+                auto: 'Rilevamento sistema automatico...',
+                windows: 'Preparazione installer Windows MSI...',
+                express: 'Creazione script di installazione...',
+                source: 'Compressione codice sorgente...'
+            };
+            
+            downloadText.textContent = messages[type] || messages.auto;
+            
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 100) progress = 100;
+                
+                progressFill.style.width = progress + '%';
+                progressText.textContent = Math.round(progress) + '%';
+                
+                if (progress >= 50 && progress < 80) {
+                    downloadText.textContent = 'Generazione files di installazione...';
+                } else if (progress >= 80 && progress < 100) {
+                    downloadText.textContent = 'Finalizzazione pacchetto...';
+                } else if (progress >= 100) {
+                    downloadText.textContent = 'Download completato!';
+                    clearInterval(interval);
+                    
+                    setTimeout(() => {
+                        // Simula l'avvio del download
+                        const downloadMap = {
+                            auto: 'FiscalRecorder-Setup.exe',
+                            windows: 'FiscalRecorder-v1.0.msi', 
+                            express: 'FiscalRecorder-Express-Install.zip',
+                            source: 'FiscalRecorder-Source.zip'
+                        };
+                        
+                        // Crea un link di download fittizio
+                        const link = document.createElement('a');
+                        link.href = '#';
+                        link.download = downloadMap[type] || downloadMap.auto;
+                        link.textContent = 'Se il download non inizia automaticamente, clicca qui';
+                        
+                        downloadText.innerHTML = 'Download avviato!<br><br>' + link.outerHTML;
+                        
+                        setTimeout(() => {
+                            closeDownloadModal();
+                            // In un'implementazione reale, qui inizierebbe il vero download
+                            alert('Funzionalità demo: il download reale sarà disponibile dopo l\'implementazione del sistema di build automatico.');
+                        }, 2000);
+                    }, 1000);
+                }
+            }, 100);
+        }
+
+        // Smooth scrolling per i link di navigazione
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

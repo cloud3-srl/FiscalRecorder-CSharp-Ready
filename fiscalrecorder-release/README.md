@@ -1,138 +1,267 @@
-# 🧾 FiscalRecorder - Sistema di Registrazione Fiscale
+# FiscalRecorder v1.0.0 - Release Package
 
-**Versione:** 1.0.0  
-**Data Release:** 27 Maggio 2025  
-**Tecnologie:** React + TypeScript + Node.js + PostgreSQL
+Sistema completo di distribuzione e installazione per **FiscalRecorder**, il registratore di cassa professionale moderno.
 
-## 📋 Panoramica
+## 📋 Contenuto Release
 
-FiscalRecorder è un sistema completo di Point of Sale (POS) e registrazione fiscale progettato per gestire vendite, inventario, clienti e reporting fiscale con supporto multi-database.
+### 🌐 Landing Page
+- **`index.html`** - Landing page professionale con download automatico
+- Design responsive e moderno
+- Modal di download interattiva
+- Compatibile con tutti i browser
 
-### ✨ Caratteristiche Principali
+### 🚀 Script di Installazione
 
-- **🛒 Point of Sale Moderno** - Interfaccia touch-friendly per vendite rapide
-- **📊 Gestione Inventario** - Tracciamento prodotti, categorie e lotti
-- **👥 Gestione Clienti** - Anagrafica clienti completa
-- **🔄 Multi-Database** - Supporto PostgreSQL e SQL Server
-- **📱 PWA Ready** - Installabile su dispositivi mobili
-- **🔐 Sicurezza** - Autenticazione JWT e controllo accessi
-- **📈 Reporting** - Dashboard e report analitici
-- **🌐 Web-Based** - Accessibile da browser
+#### Windows
+- **`install-windows.ps1`** - Installazione PowerShell completa
+- **Funzionalità:**
+  - Rilevamento automatico sistema
+  - Installazione dipendenze (Node.js via Chocolatey)
+  - Configurazione firewall Windows
+  - Creazione collegamenti desktop e menu Start
+  - Backup installazione precedente
+  - Test post-installazione
 
-## 📦 Contenuto Archivio
+#### Unix/Linux/macOS  
+- **`install-express.sh`** - Installazione Bash automatica
+- **Funzionalità:**
+  - Supporto multi-piattaforma
+  - Download via Git o ZIP fallback
+  - Configurazione database SQLite
+  - Creazione desktop entry (Linux)
+  - Gestione permessi automatica
+  - Verifica requisiti di sistema
 
+### 🏗️ Build System
+- **`build-installers.sh`** - Generatore automatico pacchetti
+- **Genera:**
+  - Pacchetto Windows (.zip)
+  - Pacchetto Unix (.tar.gz)
+  - Versione portable (.zip)
+  - Codice sorgente (.tar.gz)
+  - Checksum SHA256
+  - Release notes automatiche
+
+## 🎯 Modalità di Installazione
+
+### 1. 🪟 Windows - Automatica (Consigliata)
+```powershell
+# Scarica e esegui in PowerShell (come Amministratore)
+Set-ExecutionPolicy Bypass -Scope Process -Force
+.\install-windows.ps1
 ```
-FiscalRecorder/
-├── 📁 source/              # Codice sorgente completo
-├── 📁 database/            # Schema e setup database
-├── 📁 docs/               # Documentazione dettagliata
-├── 📁 scripts/            # Script di installazione
-├── 📄 README.md           # Questo file
-├── 📄 INSTALL.md          # Guida installazione
-├── 📄 REQUIREMENTS.md     # Prerequisiti sistema
-└── 📄 CONFIGURATION.md    # Guida configurazione
-```
 
-## 🚀 Installazione Rapida
+**Caratteristiche:**
+- ✅ Installazione guidata step-by-step
+- ✅ Rilevamento automatico dipendenze
+- ✅ Installazione Node.js se mancante
+- ✅ Configurazione firewall automatica
+- ✅ Collegamenti desktop e menu Start
+- ✅ Backup versioni precedenti
 
-### 1. Prerequisiti
+### 2. 🐧 Unix/Linux/macOS - Express
 ```bash
-# Installa Node.js 18+ e PostgreSQL 14+
-node --version  # >= 18.0.0
-psql --version  # >= 14.0
+# Rendi eseguibile e avvia
+chmod +x install-express.sh
+./install-express.sh
 ```
 
-### 2. Setup Database
-```bash
-# Crea database PostgreSQL
-sudo -u postgres createdb fiscalrecorder
-sudo -u postgres psql -d fiscalrecorder -f database/schema.sql
-```
+**Caratteristiche:**
+- ✅ Rilevamento automatico OS
+- ✅ Download intelligente (Git + ZIP fallback)
+- ✅ Build automatico applicazione
+- ✅ Configurazione database
+- ✅ Script di avvio integrato
+- ✅ Desktop entry (Linux)
 
-### 3. Installazione Applicazione
+### 3. 📦 Portable - Zero Installation
+- Scarica versione portable
+- Estrai in qualsiasi cartella
+- Esegui senza modificare il sistema
+- Ideale per USB o test
+
+### 4. 👨‍💻 Developer - Codice Sorgente
 ```bash
-cd source/
+# Build completo per sviluppatori
 npm install
 npm run build
 npm start
 ```
 
-### 4. Accesso
-- **URL:** http://localhost:5001
-- **Demo Login:** Configurabile nel sistema
+## 🔧 Requisiti di Sistema
 
-## 📚 Documentazione Completa
+### Minimi
+- **OS:** Windows 10+, macOS 10.14+, Linux (Ubuntu 18.04+)
+- **Node.js:** 14.0+ (installato automaticamente se mancante)
+- **RAM:** 4GB
+- **Spazio:** 500MB
+- **Browser:** Chrome, Firefox, Safari, Edge
 
-Per l'installazione dettagliata step-by-step:
-- 📖 [**INSTALL.md**](INSTALL.md) - Guida installazione completa
-- ⚙️ [**REQUIREMENTS.md**](REQUIREMENTS.md) - Prerequisiti di sistema
-- 🔧 [**CONFIGURATION.md**](CONFIGURATION.md) - Configurazione avanzata
+### Consigliati
+- **RAM:** 8GB
+- **SSD:** Per prestazioni ottimali
+- **Connessione Internet:** Per download iniziale
 
-## 🏗️ Architettura Tecnica
+## 🚀 Quick Start
 
-### Frontend
-- **React 18** + TypeScript
-- **Vite** per bundling e sviluppo
-- **Tailwind CSS** + Shadcn/ui
-- **React Query** per state management
-- **PWA** con service worker
+### Utente Finale
+1. **Apri `index.html`** nel browser
+2. **Clicca "Scarica Ora"** 
+3. **Seleziona il tuo sistema** operativo
+4. **Esegui lo script** di installazione
+5. **Segui le istruzioni** a schermo
 
-### Backend
-- **Node.js** + Express
-- **Drizzle ORM** per database
-- **JWT** per autenticazione
-- **PM2** per process management
-
-### Database
-- **PostgreSQL** (primario)
-- **SQL Server** (connessione esterna)
-- **Migrazioni** automatiche Drizzle
-
-## 🛡️ Sicurezza e Produzione
-
-- ✅ Autenticazione JWT sicura
-- ✅ Headers di sicurezza configurati
-- ✅ HTTPS SSL/TLS
-- ✅ Backup automatico database
-- ✅ Logging centralizzato
-- ✅ Rate limiting API
-
-## 🔧 Supporto e Manutenzione
-
-### Backup Database
+### Sistemista
 ```bash
-# Backup automatico configurato via cron
-PGPASSWORD="password" pg_dump -h localhost -U fiscalapp fiscalrecorder > backup.sql
+# Build completo di tutti i pacchetti
+chmod +x build-installers.sh
+./build-installers.sh
+
+# Verrà creata la cartella 'dist' con tutti i pacchetti
 ```
 
-### Monitoraggio
-```bash
-# Status applicazione
-pm2 status
-pm2 logs fiscalrecorder
+## 📁 Struttura Post-Installazione
+
+```
+FiscalRecorder/
+├── client/                 # Frontend React
+├── server/                 # Backend Node.js  
+├── data/                   # Database SQLite
+├── docs/                   # Documentazione
+├── .env                    # Configurazione
+├── start-fiscalrecorder.*  # Script di avvio
+└── README.md              # Guida utente
 ```
 
-### Aggiornamenti
-```bash
-cd source/
-git pull origin main  # Se connesso a repository
-npm install
-npm run build
-pm2 reload fiscalrecorder
+## 🎨 Personalizzazione Installazione
+
+### Windows PowerShell
+```powershell
+# Installazione personalizzata
+.\install-windows.ps1 -InstallPath "C:\MioPos" -Unattended
 ```
+
+**Parametri disponibili:**
+- `-InstallPath` - Directory di installazione
+- `-Unattended` - Modalità silenziosa
+- `-CreateDesktopShortcut:$false` - Disabilita collegamento desktop
+- `-CreateStartMenuShortcut:$false` - Disabilita collegamento menu
+
+### Unix/Linux/macOS
+```bash
+# Personalizzazione tramite variabili ambiente
+export INSTALL_DIR="$HOME/MyPOS"
+export FISCAL_RECORDER_VERSION="1.0.0"
+./install-express.sh
+```
+
+## 🔒 Sicurezza
+
+### Verifiche Automatiche
+- ✅ Controllo integrità file
+- ✅ Verifica dipendenze sicure
+- ✅ Isolamento installazione
+- ✅ Backup prima aggiornamenti
+
+### Checksum
+Tutti i pacchetti includono checksum SHA256 per verificare l'integrità:
+```bash
+# Verifica integrità
+sha256sum -c checksums.sha256
+```
+
+## 🐛 Troubleshooting
+
+### Problemi Comuni
+
+#### Windows
+```
+Errore: Execution Policy
+Soluzione: Set-ExecutionPolicy Bypass -Scope Process -Force
+```
+
+```
+Errore: Node.js non trovato
+Soluzione: L'installer lo installerà automaticamente
+```
+
+#### Unix/Linux
+```
+Errore: Permission denied
+Soluzione: chmod +x install-express.sh
+```
+
+```
+Errore: curl non trovato
+Soluzione: sudo apt-get install curl (Ubuntu/Debian)
+```
+
+#### Generale
+```
+Porta 3000 già in uso
+Soluzione: Modifica PORT=3001 nel file .env
+```
+
+### Log di Installazione
+- **Windows:** `%TEMP%\fiscalrecorder-install.log`
+- **Unix:** `/tmp/fiscalrecorder-install.log`
+
+## 📞 Supporto
+
+### Documentazione
+- [README principale](../README.md) - Guida sviluppatore completa
+- [Documentazione API](../docs/) - Reference tecnico
+- [FAQ](../docs/FAQ.md) - Domande frequenti
+
+### Community
+- **Issues:** [GitHub Issues](https://github.com/cloud3-srl/FiscalRecorder-CSharp-Ready/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/cloud3-srl/FiscalRecorder-CSharp-Ready/discussions)
+
+### Commerciale
+- **Email:** support@fiscalrecorder.it
+- **Telefono:** +39 xxx xxx xxxx
+- **Sito:** https://fiscalrecorder.it
 
 ## 📄 Licenza
 
-Questo software è rilasciato sotto licenza proprietaria.  
-© 2025 - Tutti i diritti riservati.
+FiscalRecorder è software libero distribuito sotto **licenza Open Source**.
 
-## 🆘 Supporto
+- ✅ **Uso commerciale** permesso
+- ✅ **Modifiche** permesse  
+- ✅ **Distribuzione** permessa
+- ✅ **Uso privato** permesso
 
-Per supporto tecnico o domande:
-- 📧 Email: support@example.com
-- 📖 Documentazione: Consultare i file nella cartella `docs/`
-- 🐛 Issue: Segnalare problemi tecnici
+Vedere file [LICENSE](../LICENSE) per dettagli completi.
+
+## 🏷️ Versioning
+
+FiscalRecorder segue [Semantic Versioning](https://semver.org/):
+
+- **MAJOR:** Cambiamenti incompatibili API
+- **MINOR:** Nuove funzionalità compatibili
+- **PATCH:** Bug fix compatibili
+
+**Versione attuale:** `1.0.0`
+
+## 🚀 Roadmap
+
+### v1.1.0 (Q2 2025)
+- [ ] Interfaccia mobile nativa
+- [ ] Integrazione pagamenti POS
+- [ ] Sincronizzazione cloud
+
+### v1.2.0 (Q3 2025)
+- [ ] Multi-negozio
+- [ ] Analytics avanzate
+- [ ] Plugin system
+
+### v2.0.0 (Q4 2025)
+- [ ] Architettura microservizi
+- [ ] API GraphQL
+- [ ] White-label support
 
 ---
 
-**🎯 Ready to Deploy!** Segui la guida INSTALL.md per iniziare.
+**Sviluppato con ❤️ per i commercianti italiani**
+
+*Questo progetto è mantenuto da [Cloud3 S.r.l.](https://cloud3.srl) e la community Open Source.*

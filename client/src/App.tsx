@@ -45,17 +45,16 @@ import {
 
 // Hook e Componente Logo
 function useAppLogo() {
-  const { data } = useQuery<{ general_settings_logo?: { appLogoBase64?: string | null } } | null, Error>({
-    queryKey: ['appLogoConfig'],
+  const { data } = useQuery({
+    queryKey: ['company-profile'],
     queryFn: async () => {
-      const response = await fetch('/api/settings/general-config');
-      if (!response.ok) throw new Error('Impossibile caricare la configurazione del logo');
-      const result = await response.json();
-      return result.success ? result.data : null;
+      const response = await fetch('/api/settings/company-profile');
+      if (!response.ok) return null;
+      return response.json();
     },
-    select: (data) => ({ general_settings_logo: data?.general_settings_logo })
+    select: (data) => data?.logo || null
   });
-  return data?.general_settings_logo?.appLogoBase64 || null;
+  return data;
 }
 
 const Logo = ({ collapsed = false }) => {
@@ -74,9 +73,7 @@ const Logo = ({ collapsed = false }) => {
 const navItems = [
   { href: "/", label: "POS", icon: Home },
   { href: "/reports", label: "Report", icon: BarChart3 },
-  { href: "/documents", label: "Documenti", icon: FileArchive },
   { href: "/customers", label: "Clienti", icon: Users },
-  { href: "/deferred-invoices", label: "Fattura differita", icon: FileClock },
   { href: "/fidelity", label: "Fidelity", icon: Star },
   { href: "/settings", label: "Impostazioni", icon: Settings }, 
   { href: "/help-center", label: "Centro assistenza", icon: HelpCircle },
@@ -191,25 +188,44 @@ function AppNavigation() {
         "hidden md:flex md:flex-col border-r bg-background transition-all duration-300 relative",
         isMenuCollapsed ? "md:w-16" : "md:w-64"
       )}>
-        {/* Header con hamburger e logo */}
+        {/* Header con logo e hamburger */}
         <div className={cn("border-b transition-all duration-300", isMenuCollapsed ? "p-2" : "p-4")}>
           <div className="flex items-center justify-between">
-            {/* Hamburger button sempre visibile */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleMenuCollapse}
-              className={cn("flex-shrink-0", isMenuCollapsed ? "mx-auto" : "")}
-              title={isMenuCollapsed ? "Espandi menu" : "Comprimi menu"}
-            >
-              <Menu className="h-6 w-6" />
-            </Button>
-            
-            {/* Logo visibile solo quando espanso */}
-            {!isMenuCollapsed && (
-              <Link href="/" className="ml-2">
+            {/* Logo sempre a sinistra */}
+            {!isMenuCollapsed ? (
+              <Link href="/" className="flex-grow">
                 <Logo collapsed={false} />
               </Link>
+            ) : (
+              <Link href="/" className="mx-auto">
+                <Logo collapsed={true} />
+              </Link>
+            )}
+            
+            {/* Hamburger button sempre a destra quando espanso */}
+            {!isMenuCollapsed && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleMenuCollapse}
+                className="flex-shrink-0 ml-2"
+                title="Comprimi menu"
+              >
+                <Menu className="h-6 w-6" />
+              </Button>
+            )}
+            
+            {/* Hamburger button centrato quando collassato */}
+            {isMenuCollapsed && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleMenuCollapse}
+                className="absolute top-2 right-2"
+                title="Espandi menu"
+              >
+                <Menu className="h-6 w-6" />
+              </Button>
             )}
           </div>
         </div>

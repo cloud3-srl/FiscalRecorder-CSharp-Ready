@@ -202,6 +202,7 @@ export const companyProfile = pgTable('company_profile', {
   id: serial('id').primaryKey(),
   groupName: text('group_name'),
   companyName: varchar('company_name', { length: 255 }).notNull(),
+  logo: text('logo'),
   addressStreet: text('address_street'),
   addressZip: varchar('address_zip', { length: 20 }),
   addressCity: varchar('address_city', { length: 100 }),

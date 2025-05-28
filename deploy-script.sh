@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script di deploy per FiscalRecorder
-# Server: cloudpos.cloud3.cloud (65.108.89.211)
+# Server: cloupos.cloud3.cloud (65.108.89.211)
 
 echo "🚀 Avvio deploy FiscalRecorder..."
 
@@ -93,10 +93,10 @@ mkdir -p logs
 
 # 15. Configurazione Nginx
 echo "🔧 Configurazione Nginx..."
-cat > /etc/nginx/sites-available/cloudpos.cloud3.cloud << EOF
+cat > /etc/nginx/sites-available/cloupos.cloud3.cloud << EOF
 server {
     listen 80;
-    server_name cloudpos.cloud3.cloud;
+    server_name cloupos.cloud3.cloud;
 
     # Redirect all HTTP requests to HTTPS
     return 301 https://\$server_name\$request_uri;
@@ -104,7 +104,7 @@ server {
 
 server {
     listen 443 ssl http2;
-    server_name cloudpos.cloud3.cloud;
+    server_name cloupos.cloud3.cloud;
 
     # SSL configuration will be added by Certbot
 
@@ -137,7 +137,7 @@ server {
 EOF
 
 # 16. Abilitazione sito Nginx
-ln -sf /etc/nginx/sites-available/cloudpos.cloud3.cloud /etc/nginx/sites-enabled/
+ln -sf /etc/nginx/sites-available/cloupos.cloud3.cloud /etc/nginx/sites-enabled/
 rm -f /etc/nginx/sites-enabled/default
 
 # 17. Test configurazione Nginx
@@ -149,7 +149,7 @@ systemctl enable nginx
 
 # 19. Setup SSL con Certbot
 echo "🔒 Configurazione SSL..."
-certbot --nginx -d cloudpos.cloud3.cloud --non-interactive --agree-tos --email admin@cloud3.srl
+certbot --nginx -d cloupos.cloud3.cloud --non-interactive --agree-tos --email admin@cloud3.srl
 
 # 20. Avvio applicazione con PM2
 echo "🚀 Avvio applicazione..."
@@ -193,7 +193,8 @@ ufw allow 443
 ufw --force enable
 
 echo "✅ Deploy completato!"
-echo "🌐 Sito disponibile su: https://cloudpos.cloud3.cloud"
+echo "🌐 Sito disponibile su: https://cloupos.cloud3.cloud"
 echo "📊 PM2 status: pm2 status"
 echo "📝 Logs: pm2 logs fiscalrecorder"
 echo "💾 Backup test: /opt/scripts/backup-db.sh"
+

@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Upload, Loader2, Download, Trash2, Database, RefreshCw, Edit, Search, Printer } from "lucide-react"; // Added Printer import
+import { Upload, Loader2, Download, Trash2, Database, RefreshCw, Edit, Search, Printer } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import {
@@ -20,29 +20,44 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Link } from "wouter"; // Added import
+import { Link } from "wouter";
+
+// Tipi TypeScript
+interface Stats {
+  totalProducts: number;
+  lastSync: string;
+  cacheStatus: 'valid' | 'invalid';
+}
+
+interface Product {
+  id: number;
+  code: string;
+  name: string;
+  price: number;
+  unitOfMeasure?: string;
+}
 
 export default function AdminPage() {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [errorLogId, setErrorLogId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const { toast } = useToast();
 
   // Query per ottenere le statistiche
-  const { data: stats, isLoading: isLoadingStats } = useQuery({
+  const { data: stats, isLoading: isLoadingStats } = useQuery<Stats>({
     queryKey: ['/api/admin/stats'],
   });
 
   // Query per ottenere i prodotti
-  const { data: products, isLoading: isLoadingProducts } = useQuery({
+  const { data: products, isLoading: isLoadingProducts } = useQuery<Product[]>({
     queryKey: ['/api/products'],
   });
 
   // Mutation per aggiornare un prodotto
   const { mutate: updateProduct, isPending: isUpdating } = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: Product) => {
       const response = await fetch(`/api/products/${data.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -163,7 +178,7 @@ export default function AdminPage() {
   };
 
   // Filtra i prodotti in base al termine di ricerca
-  const filteredProducts = products?.filter(product =>
+  const filteredProducts = products?.filter((product: Product) =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.code.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -329,7 +344,7 @@ export default function AdminPage() {
                         <Loader2 className="h-6 w-6 animate-spin mx-auto" />
                       </TableCell>
                     </TableRow>
-                  ) : filteredProducts?.map((product) => (
+                  ) : filteredProducts?.map((product: Product) => (
                     <TableRow key={product.id}>
                       <TableCell>{product.code}</TableCell>
                       <TableCell>{product.name}</TableCell>
@@ -363,7 +378,7 @@ export default function AdminPage() {
                   <label className="text-sm font-medium">Codice</label>
                   <Input
                     value={editingProduct?.code || ''}
-                    onChange={(e) => setEditingProduct({...editingProduct, code: e.target.value})}
+                    onChange={(e) => setEditingProduct({...editingProduct!, code: e.target.value})}
                   />
                 </div>
                 <div className="space-y-2">
@@ -371,7 +386,7 @@ export default function AdminPage() {
                   <Input
                     type="number"
                     value={editingProduct?.price || ''}
-                    onChange={(e) => setEditingProduct({...editingProduct, price: e.target.value})}
+                    onChange={(e) => setEditingProduct({...editingProduct!, price: parseFloat(e.target.value) || 0})}
                   />
                 </div>
               </div>
@@ -380,7 +395,7 @@ export default function AdminPage() {
                 <label className="text-sm font-medium">Descrizione</label>
                 <Input
                   value={editingProduct?.name || ''}
-                  onChange={(e) => setEditingProduct({...editingProduct, name: e.target.value})}
+                  onChange={(e) => setEditingProduct({...editingProduct!, name: e.target.value})}
                 />
               </div>
 
@@ -388,7 +403,7 @@ export default function AdminPage() {
                 <label className="text-sm font-medium">Unità di misura</label>
                 <Input
                   value={editingProduct?.unitOfMeasure || ''}
-                  onChange={(e) => setEditingProduct({...editingProduct, unitOfMeasure: e.target.value})}
+                  onChange={(e) => setEditingProduct({...editingProduct!, unitOfMeasure: e.target.value})}
                 />
               </div>
 

@@ -26,7 +26,7 @@ export default function CustomerSelect({ selectedCustomerId, onSelect }: Custome
 
   const filteredCustomers = customers?.filter(customer =>
     customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (customer.code && customer.code.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (customer.fiscalCode && customer.fiscalCode.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
